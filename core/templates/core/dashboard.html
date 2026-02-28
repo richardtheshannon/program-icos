@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard — Powerful Silence{% endblock %}
+
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+
+    <!-- Sobriety Counter -->
+    <div class="bg-ps-card border border-ps-border rounded-xl p-6">
+        <div class="flex items-center gap-3 mb-4">
+            <div class="p-2 bg-ps-accent/20 rounded-lg">
+                <i data-lucide="timer" class="w-5 h-5 text-ps-accent"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-white">Sobriety</h3>
+        </div>
+        {% if user.sobriety_date %}
+        <p class="text-4xl font-bold text-white mb-1">{{ user.sobriety_days }} days</p>
+        <p class="text-sm text-ps-muted">Since {{ user.sobriety_date|date:"F j, Y" }}</p>
+        {% else %}
+        <p class="text-ps-muted text-sm">Set your sobriety date in your profile to start tracking.</p>
+        {% endif %}
+    </div>
+
+    <!-- Step Progress -->
+    <div class="bg-ps-card border border-ps-border rounded-xl p-6">
+        <div class="flex items-center gap-3 mb-4">
+            <div class="p-2 bg-emerald-500/20 rounded-lg">
+                <i data-lucide="list-ordered" class="w-5 h-5 text-emerald-400"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-white">Step Progress</h3>
+        </div>
+        <p class="text-4xl font-bold text-white mb-1">—</p>
+        <p class="text-sm text-ps-muted">Begin your step work to track progress</p>
+    </div>
+
+    <!-- Today's Check-In -->
+    <div class="bg-ps-card border border-ps-border rounded-xl p-6">
+        <div class="flex items-center gap-3 mb-4">
+            <div class="p-2 bg-amber-500/20 rounded-lg">
+                <i data-lucide="calendar-check" class="w-5 h-5 text-amber-400"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-white">Today's Check-In</h3>
+        </div>
+        <p class="text-ps-muted text-sm">Daily inventory and reflection coming soon.</p>
+    </div>
+
+    <!-- Gratitude -->
+    <div class="bg-ps-card border border-ps-border rounded-xl p-6">
+        <div class="flex items-center gap-3 mb-4">
+            <div class="p-2 bg-pink-500/20 rounded-lg">
+                <i data-lucide="sparkles" class="w-5 h-5 text-pink-400"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-white">Gratitude</h3>
+        </div>
+        <p class="text-ps-muted text-sm">Start a gratitude list to cultivate awareness.</p>
+    </div>
+
+    <!-- Amends -->
+    <div class="bg-ps-card border border-ps-border rounded-xl p-6">
+        <div class="flex items-center gap-3 mb-4">
+            <div class="p-2 bg-cyan-500/20 rounded-lg">
+                <i data-lucide="handshake" class="w-5 h-5 text-cyan-400"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-white">Amends</h3>
+        </div>
+        <p class="text-ps-muted text-sm">Steps 8 & 9 amends tracking coming soon.</p>
+    </div>
+
+    <!-- Encouragement -->
+    <div class="bg-ps-card border border-ps-border rounded-xl p-6">
+        <div class="flex items-center gap-3 mb-4">
+            <div class="p-2 bg-violet-500/20 rounded-lg">
+                <i data-lucide="quote" class="w-5 h-5 text-violet-400"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-white">Remember</h3>
+        </div>
+        <p class="text-gray-300 text-sm italic">
+            "We will intuitively know how to handle situations which used to baffle us."
+        </p>
+        <p class="text-xs text-ps-muted mt-2">— Alcoholics Anonymous, p. 84</p>
+    </div>
+
+</div>
+{% endblock %}

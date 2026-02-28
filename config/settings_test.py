@@ -8,3 +8,10 @@ DATABASES = {
         "NAME": ":memory:",
     }
 }
+
+# Use simple static files storage for tests (no collectstatic needed)
+STORAGES = {
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
