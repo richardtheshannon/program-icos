@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     "axes",
     # Local
     "core",
+    "steps",
 ]
 
 MIDDLEWARE = [

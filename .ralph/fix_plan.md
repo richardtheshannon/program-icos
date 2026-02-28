@@ -48,25 +48,46 @@
 
 ---
 
-## Phase 3 — Step Data Models & Seed Data
+## Phase 3 — Step Data Models & Seed Data (COMPLETE)
 
 **Goal**: Steps and Questions tables created and populated with original content for all 12 steps.
 
 ### Tasks
-- [ ] Create the `steps` app with `python manage.py startapp steps`
-- [ ] Add `steps` to `INSTALLED_APPS`
-- [ ] Implement `steps/models.py` — Step, Question, Response, StepProgress models (UUID PKs)
-- [ ] Run migrations: `python manage.py makemigrations steps && python manage.py migrate`
-- [ ] Implement `steps/management/commands/seed_steps.py` — Seed all 12 steps with original questions (~130 total)
-- [ ] Run seed command: `python manage.py seed_steps`
-- [ ] Register models in `steps/admin.py`
-- [ ] Write tests for step models and seed command
+- [x] Create the `steps` app with `python manage.py startapp steps`
+- [x] Add `steps` to `INSTALLED_APPS`
+- [x] Implement `steps/models.py` — Step, Question, Response, StepProgress models (UUID PKs)
+- [x] Run migrations: `python manage.py makemigrations steps && python manage.py migrate`
+- [x] Implement `steps/management/commands/seed_steps.py` — Seed all 12 steps with original questions (136 total)
+- [x] Run seed command: `python manage.py seed_steps`
+- [x] Register models in `steps/admin.py` (with QuestionInline on Step)
+- [x] Write 9 tests for step models and seed command
 
 ### Verification
-- [ ] All 12 steps visible in Django admin
-- [ ] ~130 original questions seeded
-- [ ] Steps 10, 11, 12 have `is_recurring = True`
-- [ ] `seed_steps` command is idempotent
+- [x] All 12 steps visible in Django admin
+- [x] 136 original questions seeded
+- [x] Steps 10, 11, 12 have `is_recurring = True`
+- [x] `seed_steps` command is idempotent
+- [x] 24 total tests passing (15 core + 9 steps)
+
+---
+
+## Phase 4 — Step List View (The 12 Steps Overview)
+
+**Goal**: A page showing all 12 steps with progress indicators and navigation to individual step forms.
+
+### Tasks
+- [ ] Implement `steps/views.py` — `StepListView` with progress data
+- [ ] Create `steps/templates/steps/step_list.html` — Grid of 12 step cards
+- [ ] Create `steps/templates/steps/partials/step_card.html` — Individual step card partial
+- [ ] Create `steps/templates/steps/partials/progress_bar.html` — Reusable progress bar
+- [ ] Configure `steps/urls.py` and wire into `config/urls.py`
+- [ ] Update sidebar links to point to step list
+- [ ] Write tests for step list view
+
+### Verification
+- [ ] `/steps/` shows all 12 steps with status and progress
+- [ ] Each step card links to step detail page
+- [ ] Steps 10, 11, 12 marked as recurring
 
 ## Notes
 - PostgreSQL runs on Windows host — container connects via `host.docker.internal:5432`
