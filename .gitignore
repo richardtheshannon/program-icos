@@ -1,0 +1,50 @@
+# Environment
+.env
+*.pyc
+__pycache__/
+
+# Database
+db.sqlite3
+
+# Static files (collected)
+staticfiles/
+
+# Media uploads
+media/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Logs
+*.log
+
+# Ralph logs (keep config, exclude logs)
+.ralph/logs/
+.ralph/.circuit_breaker_history
+.ralph/.circuit_breaker_state
+.ralph/.call_count
+.ralph/.exit_signals
+.ralph/.last_reset
+.ralph/.loop_start_sha
+.ralph/.ralph_session
+.ralph/.ralph_session_history
+.ralph/status.json
+.ralph/progress.json
+.ralph/live.log
+
+# Docker
+pip-cache/
+
+# Embedded repos
+ralph-claude-code/

@@ -1,0 +1,10 @@
+# Ralph Project Configuration — PS01 (Powerful Silence)
+
+ALLOWED_TOOLS="Write,Read,Edit,Bash"
+MAX_LOOPS=50
+LOOP_TIMEOUT=300
+CIRCUIT_BREAKER_MAX_FAILURES=3
+CIRCUIT_BREAKER_RESET_TIMEOUT=300
+
+# Claude Code model (set by ralph-schedule.sh or override here)
+# CLAUDE_CODE_CMD="claude --model claude-sonnet-4-6"

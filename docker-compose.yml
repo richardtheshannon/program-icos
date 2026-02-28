@@ -1,0 +1,27 @@
+services:
+  dev:
+    build: .
+    container_name: ps01-dev
+    environment:
+      - DATABASE_URL=postgresql://ps01_user:devpassword123@host.docker.internal:5432/ps01_db
+      - DJANGO_SETTINGS_MODULE=config.settings
+      - PYTHONDONTWRITEBYTECODE=1
+      - SECRET_KEY=dev-secret-key-change-in-production
+      - DEBUG=True
+      - ALLOWED_HOSTS=*
+      - PS01_USER_EMAIL=${PS01_USER_EMAIL:-admin@powerfulsilence.com}
+      - PS01_USER_PASSWORD=${PS01_USER_PASSWORD:-devpassword123}
+      - PS01_USER_FIRST_NAME=${PS01_USER_FIRST_NAME:-Admin}
+      - PS01_USER_LAST_NAME=${PS01_USER_LAST_NAME:-User}
+    volumes:
+      - .:/home/developer/project
+      - pip-cache:/home/developer/.cache/pip
+      - ~/.claude:/home/developer/.claude
+    ports:
+      - "8000:8000"
+    stdin_open: true
+    tty: true
+    command: bash
+
+volumes:
+  pip-cache:

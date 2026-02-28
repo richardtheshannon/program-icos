@@ -1,0 +1,9 @@
+Django>=5.0,<6.0
+psycopg2-binary
+python-decouple
+whitenoise
+django-crispy-forms
+crispy-tailwind
+django-axes
+pytest
+pytest-django
