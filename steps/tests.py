@@ -5,8 +5,13 @@ from django.core.management import call_command
 from django.test import Client
 
 from core.models import User
+from steps.forms import StepWorkForm
 from steps.models import Question, Response, Step, StepProgress
 
+
+# ---------------------------------------------------------------------------
+# Seed command tests
+# ---------------------------------------------------------------------------
 
 @pytest.mark.django_db
 class TestSeedSteps:
@@ -34,6 +39,10 @@ class TestSeedSteps:
         numbers = list(Step.objects.values_list("number", flat=True))
         assert numbers == list(range(1, 13))
 
+
+# ---------------------------------------------------------------------------
+# Model tests
+# ---------------------------------------------------------------------------
 
 @pytest.mark.django_db
 class TestStepModels:
@@ -75,6 +84,10 @@ class TestStepModels:
         assert progress.completion_percentage() == 50
 
 
+# ---------------------------------------------------------------------------
+# Step list view tests
+# ---------------------------------------------------------------------------
+
 @pytest.mark.django_db
 class TestStepListView:
     def test_step_list_requires_login(self, client: Client) -> None:
@@ -106,7 +119,7 @@ class TestStepListView:
         client.get("/steps/")
         assert StepProgress.objects.filter(user=user).count() == 12
 
-    def test_step_detail_placeholder_renders(self, client: Client) -> None:
+    def test_step_detail_renders(self, client: Client) -> None:
         call_command("seed_steps", stdout=StringIO())
         user = User.objects.create_user(username="detailuser", password="pass123")
         client.force_login(user)
@@ -119,3 +132,167 @@ class TestStepListView:
         client.force_login(user)
         response = client.get("/steps/99/")
         assert response.status_code == 404
+
+
+# ---------------------------------------------------------------------------
+# Step detail view & form tests (Phase 5)
+# ---------------------------------------------------------------------------
+
+@pytest.mark.django_db
+class TestStepDetailView:
+    def _setup(self, client: Client):
+        """Seed steps and log in a user."""
+        call_command("seed_steps", stdout=StringIO())
+        user = User.objects.create_user(username="formuser", password="pass123")
+        client.force_login(user)
+        return user
+
+    def test_step_detail_requires_login(self, client: Client) -> None:
+        call_command("seed_steps", stdout=StringIO())
+        response = client.get("/steps/1/")
+        assert response.status_code == 302
+        assert "/login/" in response.url
+
+    def test_step_detail_shows_questions(self, client: Client) -> None:
+        self._setup(client)
+        response = client.get("/steps/1/")
+        assert response.status_code == 200
+        content = response.content.decode()
+        assert "Save Progress" in content
+        assert 'name="q_' in content
+
+    def test_step_detail_sets_progress_to_in_progress(self, client: Client) -> None:
+        user = self._setup(client)
+        client.get("/steps/1/")
+        step = Step.objects.get(number=1)
+        progress = StepProgress.objects.get(user=user, step=step)
+        assert progress.status == StepProgress.Status.IN_PROGRESS
+        assert progress.started_at is not None
+
+    def test_step_detail_navigation(self, client: Client) -> None:
+        self._setup(client)
+        response = client.get("/steps/1/")
+        content = response.content.decode()
+        assert "Step 2" in content
+        assert "All Steps" in content
+
+    def test_step_detail_save_answers(self, client: Client) -> None:
+        user = self._setup(client)
+        step = Step.objects.get(number=1)
+        questions = list(step.questions.all()[:3])
+        post_data = {}
+        for q in questions:
+            post_data[f"q_{q.id}"] = f"Answer for question {q.number}"
+        response = client.post("/steps/1/", post_data)
+        assert response.status_code == 302
+        for q in questions:
+            resp = Response.objects.get(user=user, question=q)
+            assert resp.answer == f"Answer for question {q.number}"
+
+    def test_step_detail_prepopulates_answers(self, client: Client) -> None:
+        user = self._setup(client)
+        step = Step.objects.get(number=1)
+        q = step.questions.first()
+        Response.objects.create(user=user, question=q, answer="My previous answer")
+        response = client.get("/steps/1/")
+        assert b"My previous answer" in response.content
+
+    def test_mark_step_complete(self, client: Client) -> None:
+        user = self._setup(client)
+        step = Step.objects.get(number=1)
+        response = client.post("/steps/1/", {"set_status": "complete"})
+        assert response.status_code == 302
+        progress = StepProgress.objects.get(user=user, step=step)
+        assert progress.status == StepProgress.Status.COMPLETE
+        assert progress.completed_at is not None
+
+    def test_mark_step_revisiting(self, client: Client) -> None:
+        user = self._setup(client)
+        step = Step.objects.get(number=1)
+        StepProgress.objects.filter(user=user, step=step).update(
+            status=StepProgress.Status.COMPLETE
+        )
+        response = client.post("/steps/1/", {"set_status": "revisiting"})
+        assert response.status_code == 302
+        progress = StepProgress.objects.get(user=user, step=step)
+        assert progress.status == StepProgress.Status.REVISITING
+
+
+# ---------------------------------------------------------------------------
+# StepWorkForm tests
+# ---------------------------------------------------------------------------
+
+@pytest.mark.django_db
+class TestStepWorkForm:
+    def test_form_creates_fields_for_questions(self) -> None:
+        step = Step.objects.create(
+            number=99, title="Form Test", description="d",
+            focus="f", recovery_outcome="r", spiritual_principle="Test",
+        )
+        q1 = Question.objects.create(step=step, number=1, text="Q1?")
+        q2 = Question.objects.create(step=step, number=2, text="Q2?")
+        user = User.objects.create_user(username="formuser2", password="pass123")
+        form = StepWorkForm(step=step, user=user)
+        assert f"q_{q1.id}" in form.fields
+        assert f"q_{q2.id}" in form.fields
+
+    def test_form_prepopulates_existing_answers(self) -> None:
+        step = Step.objects.create(
+            number=99, title="Prepop Test", description="d",
+            focus="f", recovery_outcome="r", spiritual_principle="Test",
+        )
+        q = Question.objects.create(step=step, number=1, text="Q1?")
+        user = User.objects.create_user(username="prepopuser", password="pass123")
+        Response.objects.create(user=user, question=q, answer="existing answer")
+        form = StepWorkForm(step=step, user=user)
+        assert form.fields[f"q_{q.id}"].initial == "existing answer"
+
+    def test_form_save_creates_responses(self) -> None:
+        step = Step.objects.create(
+            number=99, title="Save Test", description="d",
+            focus="f", recovery_outcome="r", spiritual_principle="Test",
+        )
+        q = Question.objects.create(step=step, number=1, text="Q1?")
+        user = User.objects.create_user(username="saveuser", password="pass123")
+        form = StepWorkForm(
+            data={f"q_{q.id}": "my answer"},
+            step=step, user=user,
+        )
+        assert form.is_valid()
+        answered = form.save()
+        assert answered == 1
+        assert Response.objects.get(user=user, question=q).answer == "my answer"
+
+
+# ---------------------------------------------------------------------------
+# Auto-save endpoint tests
+# ---------------------------------------------------------------------------
+
+@pytest.mark.django_db
+class TestAutoSave:
+    def test_auto_save_requires_post(self, client: Client) -> None:
+        user = User.objects.create_user(username="autouser", password="pass123")
+        client.force_login(user)
+        response = client.get("/steps/auto-save/")
+        assert response.status_code == 405
+
+    def test_auto_save_saves_response(self, client: Client) -> None:
+        call_command("seed_steps", stdout=StringIO())
+        user = User.objects.create_user(username="autosaveuser", password="pass123")
+        client.force_login(user)
+        step = Step.objects.get(number=1)
+        q = step.questions.first()
+        response = client.post("/steps/auto-save/", {
+            "question_id": str(q.id),
+            f"q_{q.id}": "auto saved answer",
+        })
+        assert response.status_code == 200
+        assert b"Saved" in response.content
+        saved = Response.objects.get(user=user, question=q)
+        assert saved.answer == "auto saved answer"
+
+    def test_auto_save_missing_question_id(self, client: Client) -> None:
+        user = User.objects.create_user(username="missingq", password="pass123")
+        client.force_login(user)
+        response = client.post("/steps/auto-save/", {})
+        assert response.status_code == 400

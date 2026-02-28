@@ -1,0 +1,42 @@
+{% comment %}
+Renders a single question with its form field and HTMX auto-save.
+Expects: item (dict with question, field, field_name)
+{% endcomment %}
+<div class="bg-ps-card border border-ps-border rounded-xl p-5 mb-4" x-data="{ charCount: 0 }">
+    <div class="flex items-start gap-3 mb-3">
+        <span class="flex items-center justify-center w-7 h-7 rounded-md bg-gray-700 text-gray-400 text-xs font-bold flex-shrink-0 mt-0.5">
+            {{ item.question.number }}
+        </span>
+        <div class="flex-1 min-w-0">
+            <label for="id_{{ item.field_name }}" class="text-sm font-medium text-white leading-relaxed">
+                {{ item.question.text }}
+            </label>
+            {% if item.question.help_text %}
+            <p class="text-xs text-ps-muted mt-1">{{ item.question.help_text }}</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="pl-10">
+        <textarea
+            name="{{ item.field_name }}"
+            id="id_{{ item.field_name }}"
+            rows="{{ item.field.field.widget.attrs.rows }}"
+            placeholder="{{ item.field.field.widget.attrs.placeholder }}"
+            class="{{ item.field.field.widget.attrs.class }}"
+            hx-post="{% url 'auto_save_response' %}"
+            hx-trigger="keyup changed delay:2s"
+            hx-vals='{"question_id": "{{ item.question.id }}"}'
+            hx-target="#save-indicator-{{ item.question.id }}"
+            hx-swap="innerHTML"
+            hx-include="[name='{{ item.field_name }}']"
+            x-init="charCount = $el.value.length"
+            @input="charCount = $el.value.length"
+        >{{ item.field.value|default:"" }}</textarea>
+
+        <div class="flex items-center justify-between mt-1.5">
+            <span id="save-indicator-{{ item.question.id }}" class="text-xs"></span>
+            <span class="text-xs text-gray-500" x-text="charCount + ' characters'"></span>
+        </div>
+    </div>
+</div>

@@ -95,23 +95,28 @@
 
 ---
 
-## Phase 5 — Step Detail View & Form (Core Step Work)
+## Phase 5 — Step Detail View & Form (Core Step Work) (COMPLETE)
 
 **Goal**: Users can view a single step, answer all its questions in a form, and save their responses.
 
 ### Tasks
-- [ ] Implement `steps/forms.py` — Dynamic form for step questions
-- [ ] Implement `StepDetailView` in `steps/views.py` — Form rendering and saving
-- [ ] Create `steps/templates/steps/step_detail.html` — Step form page
-- [ ] Create `steps/templates/steps/partials/question_field.html` — Per-question-type field rendering
-- [ ] Add HTMX auto-save for individual question responses
-- [ ] Write tests for step detail view and form submission
+- [x] Implement `steps/forms.py` — Dynamic `StepWorkForm` with per-question fields (mapped by question_type)
+- [x] Implement `step_detail_view` in `steps/views.py` — Form rendering, saving, status changes
+- [x] Create `steps/templates/steps/step_detail.html` — Full step form page with header, progress, navigation
+- [x] Create `steps/templates/steps/partials/question_field.html` — Per-question-type field rendering with character count
+- [x] Add HTMX auto-save via `/steps/auto-save/` endpoint with 2s debounce + save indicator
+- [x] Create `steps/templates/steps/partials/save_indicator.html` — "Saved ✓" indicator partial
+- [x] Add "Mark Complete" / "Revisit Step" status controls
+- [x] Add Previous/Next step navigation
+- [x] Write 14 new tests (form, detail view, auto-save) — 44 total passing (15 core + 29 steps)
 
 ### Verification
-- [ ] `/steps/1/` shows Step 1 with all 19 questions
-- [ ] User can type answers and save
-- [ ] Saved answers persist across page reloads
-- [ ] Progress bar updates on step list after answering
+- [x] `/steps/1/` shows Step 1 with all 19 questions
+- [x] User can type answers and save (form POST + HTMX auto-save)
+- [x] Saved answers persist across page reloads (pre-populated in form)
+- [x] Progress bar updates on step list after answering
+- [x] Mark Complete / Revisit Step status controls work
+- [x] 44 total tests passing
 
 ## Notes
 - PostgreSQL runs on Windows host — container connects via `host.docker.internal:5432`
