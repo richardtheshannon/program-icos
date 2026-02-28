@@ -71,23 +71,47 @@
 
 ---
 
-## Phase 4 — Step List View (The 12 Steps Overview)
+## Phase 4 — Step List View (The 12 Steps Overview) (COMPLETE)
 
 **Goal**: A page showing all 12 steps with progress indicators and navigation to individual step forms.
 
 ### Tasks
-- [ ] Implement `steps/views.py` — `StepListView` with progress data
-- [ ] Create `steps/templates/steps/step_list.html` — Grid of 12 step cards
-- [ ] Create `steps/templates/steps/partials/step_card.html` — Individual step card partial
-- [ ] Create `steps/templates/steps/partials/progress_bar.html` — Reusable progress bar
-- [ ] Configure `steps/urls.py` and wire into `config/urls.py`
-- [ ] Update sidebar links to point to step list
-- [ ] Write tests for step list view
+- [x] Implement `steps/views.py` — `StepListView` with progress data per user
+- [x] Create `steps/templates/steps/step_list.html` — Grid of 12 step cards
+- [x] Create `steps/templates/steps/partials/step_card.html` — Individual step card with status/progress
+- [x] Create `steps/templates/steps/partials/progress_bar.html` — Color-coded progress bar
+- [x] Create `steps/templatetags/step_tags.py` — `get_item` filter for dict lookup
+- [x] Configure `steps/urls.py` and wire into `config/urls.py`
+- [x] Update sidebar "My Step Work" link to point to `/steps/` with active highlighting
+- [x] Add placeholder `step_detail_view` + template (Phase 5 will implement full form)
+- [x] Write 6 tests for step list view (30 total tests passing)
 
 ### Verification
-- [ ] `/steps/` shows all 12 steps with status and progress
-- [ ] Each step card links to step detail page
-- [ ] Steps 10, 11, 12 marked as recurring
+- [x] `/steps/` shows all 12 steps with status and progress bars
+- [x] Each step card links to `/steps/<number>/` detail page
+- [x] Steps 10, 11, 12 marked with recurring indicator
+- [x] First incomplete step highlighted as "Continue here"
+- [x] StepProgress records auto-created on first visit
+
+---
+
+## Phase 5 — Step Detail View & Form (Core Step Work)
+
+**Goal**: Users can view a single step, answer all its questions in a form, and save their responses.
+
+### Tasks
+- [ ] Implement `steps/forms.py` — Dynamic form for step questions
+- [ ] Implement `StepDetailView` in `steps/views.py` — Form rendering and saving
+- [ ] Create `steps/templates/steps/step_detail.html` — Step form page
+- [ ] Create `steps/templates/steps/partials/question_field.html` — Per-question-type field rendering
+- [ ] Add HTMX auto-save for individual question responses
+- [ ] Write tests for step detail view and form submission
+
+### Verification
+- [ ] `/steps/1/` shows Step 1 with all 19 questions
+- [ ] User can type answers and save
+- [ ] Saved answers persist across page reloads
+- [ ] Progress bar updates on step list after answering
 
 ## Notes
 - PostgreSQL runs on Windows host — container connects via `host.docker.internal:5432`

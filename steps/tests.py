@@ -2,6 +2,7 @@ from io import StringIO
 
 import pytest
 from django.core.management import call_command
+from django.test import Client
 
 from core.models import User
 from steps.models import Question, Response, Step, StepProgress
@@ -72,3 +73,49 @@ class TestStepModels:
         Response.objects.create(user=user, question=q2, answer="")  # blank = not answered
         progress = StepProgress.objects.create(user=user, step=step)
         assert progress.completion_percentage() == 50
+
+
+@pytest.mark.django_db
+class TestStepListView:
+    def test_step_list_requires_login(self, client: Client) -> None:
+        response = client.get("/steps/")
+        assert response.status_code == 302
+        assert "/login/" in response.url
+
+    def test_step_list_renders_for_authenticated_user(self, client: Client) -> None:
+        call_command("seed_steps", stdout=StringIO())
+        user = User.objects.create_user(username="stepuser", password="pass123")
+        client.force_login(user)
+        response = client.get("/steps/")
+        assert response.status_code == 200
+        assert b"My Step Work" in response.content
+
+    def test_step_list_shows_all_12_steps(self, client: Client) -> None:
+        call_command("seed_steps", stdout=StringIO())
+        user = User.objects.create_user(username="all12user", password="pass123")
+        client.force_login(user)
+        response = client.get("/steps/")
+        content = response.content.decode()
+        assert "Admitting Powerlessness" in content
+        assert "Carrying the Message" in content
+
+    def test_step_list_creates_progress_records(self, client: Client) -> None:
+        call_command("seed_steps", stdout=StringIO())
+        user = User.objects.create_user(username="progressuser", password="pass123")
+        client.force_login(user)
+        client.get("/steps/")
+        assert StepProgress.objects.filter(user=user).count() == 12
+
+    def test_step_detail_placeholder_renders(self, client: Client) -> None:
+        call_command("seed_steps", stdout=StringIO())
+        user = User.objects.create_user(username="detailuser", password="pass123")
+        client.force_login(user)
+        response = client.get("/steps/1/")
+        assert response.status_code == 200
+        assert b"Admitting Powerlessness" in response.content
+
+    def test_step_detail_404_for_invalid_step(self, client: Client) -> None:
+        user = User.objects.create_user(username="404user", password="pass123")
+        client.force_login(user)
+        response = client.get("/steps/99/")
+        assert response.status_code == 404

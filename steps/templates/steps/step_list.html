@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% load step_tags %}
+
+{% block title %}My Step Work — Powerful Silence{% endblock %}
+
+{% block page_title %}My Step Work{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <p class="text-ps-muted text-sm">
+        Work through each step at your own pace. Your progress is saved automatically.
+    </p>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+    {% for step in steps %}
+        {% with info=progress_map|get_item:step.pk %}
+        {% include "steps/partials/step_card.html" with step=step info=info %}
+        {% endwith %}
+    {% endfor %}
+</div>
+{% endblock %}
