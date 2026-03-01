@@ -6,10 +6,15 @@
 {% block page_title %}My Step Work{% endblock %}
 
 {% block content %}
-<div class="mb-6">
+<div class="flex items-center justify-between mb-6">
     <p class="text-ps-muted text-sm">
         Work through each step at your own pace. Your progress is saved automatically.
     </p>
+    <a href="{% url 'export_all_steps' %}"
+       class="no-print inline-flex items-center gap-2 px-4 py-2 bg-gray-700/50 hover:bg-gray-700 text-sm text-ps-muted hover:text-white rounded-lg transition-colors">
+        <i data-lucide="download" class="w-4 h-4"></i>
+        Export All (PDF)
+    </a>
 </div>
 
 <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">

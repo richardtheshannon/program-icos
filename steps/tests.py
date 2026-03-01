@@ -10,6 +10,58 @@ from steps.models import Question, Response, Step, StepProgress
 
 
 # ---------------------------------------------------------------------------
+# PDF export tests
+# ---------------------------------------------------------------------------
+
+@pytest.mark.django_db
+class TestStepExportView:
+    def _setup(self, client: Client):
+        call_command("seed_steps", stdout=StringIO())
+        user = User.objects.create_user(username="exportuser", password="pass123")
+        client.force_login(user)
+        return user
+
+    def test_export_requires_login(self, client: Client) -> None:
+        call_command("seed_steps", stdout=StringIO())
+        response = client.get("/steps/1/export/")
+        assert response.status_code == 302
+        assert "/login/" in response.url
+
+    def test_export_single_step_pdf(self, client: Client) -> None:
+        self._setup(client)
+        response = client.get("/steps/1/export/")
+        assert response.status_code == 200
+        assert response["Content-Type"] == "application/pdf"
+        assert 'step_1.pdf' in response["Content-Disposition"]
+
+    def test_export_step_with_answers(self, client: Client) -> None:
+        user = self._setup(client)
+        step = Step.objects.get(number=1)
+        q = step.questions.first()
+        Response.objects.create(user=user, question=q, answer="My PDF answer")
+        response = client.get("/steps/1/export/")
+        assert response.status_code == 200
+        assert response["Content-Type"] == "application/pdf"
+
+    def test_export_invalid_step_404(self, client: Client) -> None:
+        self._setup(client)
+        response = client.get("/steps/99/export/")
+        assert response.status_code == 404
+
+    def test_export_all_steps_pdf(self, client: Client) -> None:
+        self._setup(client)
+        response = client.get("/steps/export/all/")
+        assert response.status_code == 200
+        assert response["Content-Type"] == "application/pdf"
+        assert 'all_steps.pdf' in response["Content-Disposition"]
+
+    def test_export_all_requires_login(self, client: Client) -> None:
+        response = client.get("/steps/export/all/")
+        assert response.status_code == 302
+        assert "/login/" in response.url
+
+
+# ---------------------------------------------------------------------------
 # Seed command tests
 # ---------------------------------------------------------------------------
 

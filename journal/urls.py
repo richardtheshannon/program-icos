@@ -6,6 +6,7 @@ from journal.views import (
     GratitudeDeleteView,
     GratitudeHistoryView,
     GratitudeView,
+    JournalExportView,
     JournalHistoryView,
     StreakView,
 )
@@ -18,5 +19,6 @@ urlpatterns = [
     path("gratitude/add/", GratitudeAddView.as_view(), name="gratitude_add"),
     path("gratitude/<uuid:pk>/delete/", GratitudeDeleteView.as_view(), name="gratitude_delete"),
     path("gratitude/history/", GratitudeHistoryView.as_view(), name="gratitude_history"),
+    path("export/", JournalExportView.as_view(), name="journal_export"),
     path("<str:date>/", DailyCheckinView.as_view(), name="daily_checkin_date"),
 ]

@@ -237,24 +237,24 @@
 
 ---
 
-## Phase 11 — Export & Print
+## Phase 11 — Export & Print (COMPLETE)
 
 **Goal**: Users can export their completed step work, daily journals, and amends as PDF or print-friendly pages.
 
 ### Tasks
-- [ ] Install ReportLab: `pip install reportlab && pip freeze > requirements.txt`
-- [ ] Implement `steps/views.py` — StepExportView: generate PDF of a single step with all questions and user's answers (title, focus, questions with answers, recovery outcome)
-- [ ] Implement `steps/views.py` — AllStepsExportView: generate PDF of all 12 steps with answers, table of contents, page breaks between steps
-- [ ] Implement `journal/views.py` — JournalExportView: export daily inventory entries for a date range as PDF
-- [ ] Create print-friendly CSS: `@media print` styles in base template (hide sidebar, navigation, buttons in print mode)
-- [ ] Add export buttons: each step detail page "Export as PDF" / "Print" button, step list page "Export All Step Work" button, journal history "Export Date Range" button
-- [ ] Write tests for PDF generation endpoints
+- [x] Install ReportLab: `pip install reportlab && pip freeze > requirements.txt`
+- [x] Implement `steps/views.py` — StepExportView: generate PDF of a single step with all questions and user's answers (title, focus, questions with answers, recovery outcome)
+- [x] Implement `steps/views.py` — AllStepsExportView: generate PDF of all 12 steps with answers, table of contents, page breaks between steps
+- [x] Implement `journal/views.py` — JournalExportView: export daily inventory entries for a date range as PDF
+- [x] Create print-friendly CSS: `@media print` styles in base template (hide sidebar, navigation, buttons in print mode)
+- [x] Add export buttons: each step detail page "Export as PDF" / "Print" button, step list page "Export All Step Work" button, journal history "Export Date Range" button
+- [x] Write tests for PDF generation endpoints
 
 ### Verification
-- [ ] Single step exports to PDF with answers
-- [ ] All steps export to a single PDF document
-- [ ] Journal entries export for a date range
-- [ ] Print-friendly view works in browser (Ctrl+P)
+- [x] Single step exports to PDF with answers
+- [x] All steps export to a single PDF document
+- [x] Journal entries export for a date range
+- [x] Print-friendly view works in browser (Ctrl+P)
 
 ---
 

@@ -8,6 +8,56 @@ from core.models import User
 from journal.models import DailyInventory, GratitudeEntry
 
 
+# ---------------------------------------------------------------------------
+# Journal export tests
+# ---------------------------------------------------------------------------
+
+@pytest.mark.django_db
+class TestJournalExportView:
+
+    @pytest.fixture
+    def user(self) -> User:
+        return User.objects.create_user(username="exportjrnl", password="testpass123")
+
+    def test_export_requires_login(self, client: Client) -> None:
+        response = client.get("/journal/export/")
+        assert response.status_code == 302
+        assert "/login/" in response.url
+
+    def test_export_pdf_empty(self, client: Client, user: User) -> None:
+        client.force_login(user)
+        response = client.get("/journal/export/")
+        assert response.status_code == 200
+        assert response["Content-Type"] == "application/pdf"
+        assert 'journal_export.pdf' in response["Content-Disposition"]
+
+    def test_export_pdf_with_entries(self, client: Client, user: User) -> None:
+        today = timezone.now().date()
+        DailyInventory.objects.create(
+            user=user, date=today, serenity_level=8, mood=7,
+            was_resentful=True, resentful_details="Felt angry at traffic"
+        )
+        client.force_login(user)
+        response = client.get("/journal/export/")
+        assert response.status_code == 200
+        assert response["Content-Type"] == "application/pdf"
+
+    def test_export_pdf_custom_date_range(self, client: Client, user: User) -> None:
+        DailyInventory.objects.create(
+            user=user, date=datetime.date(2024, 6, 15), serenity_level=5, mood=6
+        )
+        client.force_login(user)
+        response = client.get("/journal/export/?start=2024-06-01&end=2024-06-30")
+        assert response.status_code == 200
+        assert response["Content-Type"] == "application/pdf"
+
+    def test_export_pdf_invalid_dates_fallback(self, client: Client, user: User) -> None:
+        client.force_login(user)
+        response = client.get("/journal/export/?start=bad&end=bad")
+        assert response.status_code == 200
+        assert response["Content-Type"] == "application/pdf"
+
+
 @pytest.mark.django_db
 class TestDailyInventoryModel:
 

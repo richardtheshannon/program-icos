@@ -27,6 +27,20 @@
     <script src="https://unpkg.com/htmx.org@2.0.0"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @media print {
+            body { background: white !important; color: black !important; }
+            .bg-ps-card { background: white !important; border-color: #ccc !important; }
+            .text-white, .text-gray-200, .text-gray-300 { color: black !important; }
+            .text-ps-muted { color: #555 !important; }
+            /* Hide sidebar, topbar, messages, and non-print UI */
+            nav, .lg\\:ml-64 > :first-child, [x-show], .no-print,
+            button[type="submit"], .sticky { display: none !important; }
+            .lg\\:ml-64 { margin-left: 0 !important; }
+            main { padding: 0 !important; }
+            a { color: black !important; text-decoration: none !important; }
+        }
+    </style>
     {% block extra_head %}{% endblock %}
 </head>
 <body class="h-full bg-ps-bg text-gray-200"

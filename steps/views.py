@@ -1,3 +1,4 @@
+import io
 import json
 
 from django.contrib import messages
@@ -5,8 +6,13 @@ from django.db.models import QuerySet
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.views import View
 from django.views.decorators.http import require_POST
 from django.views.generic import ListView
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.lib.units import inch
+from reportlab.platypus import PageBreak, Paragraph, SimpleDocTemplate, Spacer
 
 from steps.forms import StepWorkForm
 from steps.models import Question, Response, Step, StepProgress
@@ -158,3 +164,139 @@ def auto_save_response(request: HttpRequest) -> HttpResponse:
         "saved": True,
         "question_id": question_id,
     })
+
+
+def _build_pdf_styles() -> dict[str, ParagraphStyle]:
+    """Build reusable paragraph styles for PDF export."""
+    styles = getSampleStyleSheet()
+    return {
+        "title": ParagraphStyle(
+            "StepTitle", parent=styles["Heading1"], fontSize=18, spaceAfter=12
+        ),
+        "heading": ParagraphStyle(
+            "SectionHeading", parent=styles["Heading2"], fontSize=13, spaceAfter=6
+        ),
+        "body": ParagraphStyle(
+            "BodyText", parent=styles["Normal"], fontSize=10,
+            leading=14, spaceAfter=6
+        ),
+        "question": ParagraphStyle(
+            "Question", parent=styles["Normal"], fontSize=10,
+            leading=14, spaceAfter=4, fontName="Helvetica-Bold"
+        ),
+        "answer": ParagraphStyle(
+            "Answer", parent=styles["Normal"], fontSize=10,
+            leading=14, spaceAfter=12, leftIndent=20
+        ),
+        "italic": ParagraphStyle(
+            "Italic", parent=styles["Normal"], fontSize=10,
+            leading=14, spaceAfter=8, fontName="Helvetica-Oblique"
+        ),
+    }
+
+
+def _build_step_content(
+    step: Step, user: object, pdf_styles: dict[str, ParagraphStyle]
+) -> list:
+    """Build PDF story elements for a single step."""
+    story: list = []
+    story.append(Paragraph(f"Step {step.number}: {step.title}", pdf_styles["title"]))
+    story.append(Paragraph(f"Spiritual Principle: {step.spiritual_principle}", pdf_styles["italic"]))
+    story.append(Spacer(1, 0.1 * inch))
+    story.append(Paragraph(step.description, pdf_styles["body"]))
+    story.append(Spacer(1, 0.1 * inch))
+    story.append(Paragraph("Focus", pdf_styles["heading"]))
+    story.append(Paragraph(step.focus, pdf_styles["body"]))
+    story.append(Spacer(1, 0.2 * inch))
+
+    questions = step.questions.all()
+    responses = {
+        r.question_id: r.answer
+        for r in Response.objects.filter(user=user, question__step=step)
+    }
+
+    for q in questions:
+        story.append(Paragraph(f"Q{q.number}. {q.text}", pdf_styles["question"]))
+        answer = responses.get(q.pk, "")
+        if answer:
+            story.append(Paragraph(answer, pdf_styles["answer"]))
+        else:
+            story.append(Paragraph("<i>(not yet answered)</i>", pdf_styles["answer"]))
+
+    story.append(Spacer(1, 0.2 * inch))
+    story.append(Paragraph("Recovery Outcome", pdf_styles["heading"]))
+    story.append(Paragraph(step.recovery_outcome, pdf_styles["body"]))
+    return story
+
+
+class StepExportView(View):
+    """Export a single step as PDF."""
+
+    def get(self, request: HttpRequest, step_number: int) -> HttpResponse:
+        step = get_object_or_404(Step, number=step_number)
+        pdf_styles = _build_pdf_styles()
+
+        buf = io.BytesIO()
+        doc = SimpleDocTemplate(
+            buf, pagesize=letter,
+            topMargin=0.75 * inch, bottomMargin=0.75 * inch,
+            leftMargin=0.75 * inch, rightMargin=0.75 * inch,
+        )
+        story = _build_step_content(step, request.user, pdf_styles)
+        doc.build(story)
+
+        buf.seek(0)
+        response = HttpResponse(buf.getvalue(), content_type="application/pdf")
+        response["Content-Disposition"] = f'attachment; filename="step_{step.number}.pdf"'
+        return response
+
+
+class AllStepsExportView(View):
+    """Export all 12 steps as a single PDF with page breaks."""
+
+    def get(self, request: HttpRequest) -> HttpResponse:
+        steps = Step.objects.prefetch_related("questions").all()
+        pdf_styles = _build_pdf_styles()
+
+        buf = io.BytesIO()
+        doc = SimpleDocTemplate(
+            buf, pagesize=letter,
+            topMargin=0.75 * inch, bottomMargin=0.75 * inch,
+            leftMargin=0.75 * inch, rightMargin=0.75 * inch,
+        )
+
+        # Title page
+        story: list = []
+        title_style = ParagraphStyle(
+            "DocTitle", parent=pdf_styles["title"], fontSize=24, spaceAfter=20
+        )
+        story.append(Spacer(1, 2 * inch))
+        story.append(Paragraph("Powerful Silence", title_style))
+        story.append(Paragraph("My Step Work", pdf_styles["heading"]))
+        story.append(Spacer(1, 0.5 * inch))
+        story.append(Paragraph(
+            f"Exported by {request.user.first_name or request.user.username}",
+            pdf_styles["body"]
+        ))
+        story.append(PageBreak())
+
+        # Table of contents
+        story.append(Paragraph("Table of Contents", pdf_styles["title"]))
+        story.append(Spacer(1, 0.2 * inch))
+        for step in steps:
+            story.append(Paragraph(
+                f"Step {step.number}: {step.title}", pdf_styles["body"]
+            ))
+        story.append(PageBreak())
+
+        # Each step
+        for i, step in enumerate(steps):
+            story.extend(_build_step_content(step, request.user, pdf_styles))
+            if i < len(steps) - 1:
+                story.append(PageBreak())
+
+        doc.build(story)
+        buf.seek(0)
+        response = HttpResponse(buf.getvalue(), content_type="application/pdf")
+        response["Content-Disposition"] = 'attachment; filename="all_steps.pdf"'
+        return response
