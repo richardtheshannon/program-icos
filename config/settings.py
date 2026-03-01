@@ -68,7 +68,7 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 
 # Database — PostgreSQL via DATABASE_URL
-_db_url = config("DATABASE_URL")
+_db_url = config("DATABASE_URL", default="postgresql://user:pass@localhost:5432/db")
 # Parse postgresql://user:password@host:port/dbname
 _db_parts = _db_url.replace("postgresql://", "").split("@")
 _db_user_pass = _db_parts[0].split(":")
