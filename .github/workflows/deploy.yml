@@ -2,7 +2,7 @@ name: Deploy to Production
 
 on:
   push:
-    branches: [main]
+    branches: [master]
 
 jobs:
   test:
@@ -25,48 +25,34 @@ jobs:
         env:
           DJANGO_SETTINGS_MODULE: config.settings_test
           SECRET_KEY: test-secret-key-for-ci
-          DATABASE_URL: postgresql://user:pass@localhost:5432/test
 
   deploy:
     needs: test
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/master'
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-          cache: pip
-
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: Collect static files
-        run: python manage.py collectstatic --noinput
-        env:
-          DJANGO_SETTINGS_MODULE: config.settings_production
-          SECRET_KEY: ${{ secrets.SECRET_KEY }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          ALLOWED_HOSTS: ${{ secrets.ALLOWED_HOSTS }}
-
       - name: Deploy via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          server: ${{ secrets.FTP_HOST }}
-          username: ${{ secrets.FTP_USER }}
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: ${{ secrets.FTP_REMOTE_DIR }}
+          server-dir: /
           exclude: |
             **/.git*
             **/.git*/**
             **/__pycache__/**
-            **/node_modules/**
             .env
             db.sqlite3
             .ralph/**
             00_research/**
             _TEMP/**
             pip-cache/**
+            Dockerfile
+            docker-compose.yml
+            pytest.ini
+            .gitignore
+            staticfiles/**
