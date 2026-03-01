@@ -1,10 +1,13 @@
 import datetime
+from io import StringIO
 
 import pytest
+from django.core.management import call_command
 from django.test import Client
 from django.utils import timezone
 
 from core.models import User
+from steps.models import Question, Response, Step, StepProgress
 
 
 @pytest.mark.django_db
@@ -122,3 +125,164 @@ class TestViews:
         client.force_login(user)
         response = client.post("/logout/")
         assert response.status_code == 302
+
+
+@pytest.mark.django_db
+class TestDashboardWithData:
+    """Tests for the dashboard view with real step progress, sobriety, and activity data."""
+
+    @pytest.fixture
+    def user(self) -> User:
+        return User.objects.create_user(
+            username="dashdata",
+            password="testpass123",
+            email="dashdata@example.com",
+        )
+
+    @pytest.fixture
+    def user_with_sobriety(self) -> User:
+        return User.objects.create_user(
+            username="soberdata",
+            password="testpass123",
+            sobriety_date=timezone.now().date() - datetime.timedelta(days=90),
+        )
+
+    @pytest.fixture
+    def steps(self) -> list[Step]:
+        """Create 3 steps with questions for testing."""
+        created = []
+        for i in range(1, 4):
+            step = Step.objects.create(
+                number=i,
+                title=f"Step {i}",
+                description=f"Description {i}",
+                focus=f"Focus {i}",
+                recovery_outcome=f"Outcome {i}",
+                spiritual_principle=f"Principle {i}",
+                order=i,
+            )
+            for q_num in range(1, 4):
+                Question.objects.create(
+                    step=step,
+                    number=q_num,
+                    text=f"Step {i} Question {q_num}?",
+                )
+            created.append(step)
+        return created
+
+    def test_dashboard_shows_step_progress(self, client: Client, user: User, steps: list[Step]) -> None:
+        StepProgress.objects.create(user=user, step=steps[0], status=StepProgress.Status.COMPLETE)
+        StepProgress.objects.create(user=user, step=steps[1], status=StepProgress.Status.IN_PROGRESS)
+        client.force_login(user)
+        response = client.get("/dashboard/")
+        assert response.status_code == 200
+        ctx = response.context
+        assert ctx["steps_complete"] == 1
+        assert len(ctx["step_statuses"]) == 3
+        assert ctx["step_statuses"][0]["status"] == StepProgress.Status.COMPLETE
+        assert ctx["step_statuses"][1]["status"] == StepProgress.Status.IN_PROGRESS
+
+    def test_dashboard_current_step(self, client: Client, user: User, steps: list[Step]) -> None:
+        StepProgress.objects.create(user=user, step=steps[0], status=StepProgress.Status.COMPLETE)
+        client.force_login(user)
+        response = client.get("/dashboard/")
+        assert response.context["current_step"].number == 2
+
+    def test_dashboard_overall_percentage(self, client: Client, user: User, steps: list[Step]) -> None:
+        for step in steps:
+            StepProgress.objects.create(user=user, step=step, status=StepProgress.Status.COMPLETE)
+        client.force_login(user)
+        response = client.get("/dashboard/")
+        assert response.context["steps_complete"] == 3
+        assert response.context["overall_percentage"] == 25  # 3/12 = 25%
+
+    def test_dashboard_sobriety_breakdown(self, client: Client, user_with_sobriety: User) -> None:
+        client.force_login(user_with_sobriety)
+        response = client.get("/dashboard/")
+        breakdown = response.context["sobriety_breakdown"]
+        assert breakdown is not None
+        assert breakdown["total_days"] == 90
+        assert breakdown["months"] == 3
+
+    def test_dashboard_no_sobriety_date(self, client: Client, user: User) -> None:
+        client.force_login(user)
+        response = client.get("/dashboard/")
+        assert response.context["sobriety_breakdown"] is None
+
+    def test_dashboard_recent_activity(self, client: Client, user: User, steps: list[Step]) -> None:
+        q = steps[0].questions.first()
+        Response.objects.create(user=user, question=q, answer="My answer")
+        client.force_login(user)
+        response = client.get("/dashboard/")
+        recent = response.context["recent_responses"]
+        assert len(recent) == 1
+        assert recent[0].answer == "My answer"
+
+    def test_dashboard_recent_activity_excludes_empty(self, client: Client, user: User, steps: list[Step]) -> None:
+        q1 = steps[0].questions.first()
+        q2 = steps[0].questions.last()
+        Response.objects.create(user=user, question=q1, answer="Real answer")
+        Response.objects.create(user=user, question=q2, answer="")
+        client.force_login(user)
+        response = client.get("/dashboard/")
+        recent = response.context["recent_responses"]
+        assert len(recent) == 1
+
+    def test_dashboard_recent_activity_limited_to_5(self, client: Client, user: User, steps: list[Step]) -> None:
+        for step in steps:
+            for q in step.questions.all():
+                Response.objects.create(user=user, question=q, answer=f"Answer for {q}")
+        client.force_login(user)
+        response = client.get("/dashboard/")
+        assert len(response.context["recent_responses"]) == 5
+
+    def test_dashboard_renders_step_circles(self, client: Client, user: User, steps: list[Step]) -> None:
+        StepProgress.objects.create(user=user, step=steps[0], status=StepProgress.Status.COMPLETE)
+        client.force_login(user)
+        response = client.get("/dashboard/")
+        content = response.content.decode()
+        assert "Step Progress" in content
+        assert "/steps/1/" in content
+
+    def test_dashboard_renders_continue_button(self, client: Client, user: User, steps: list[Step]) -> None:
+        StepProgress.objects.create(user=user, step=steps[0], status=StepProgress.Status.COMPLETE)
+        client.force_login(user)
+        response = client.get("/dashboard/")
+        assert b"Continue Step 2" in response.content
+
+
+@pytest.mark.django_db
+class TestSetSobrietyDateView:
+
+    @pytest.fixture
+    def user(self) -> User:
+        return User.objects.create_user(username="sobriety", password="testpass123")
+
+    def test_set_sobriety_date(self, client: Client, user: User) -> None:
+        client.force_login(user)
+        response = client.post("/dashboard/set-sobriety-date/", {"sobriety_date": "2024-01-15"})
+        assert response.status_code == 302
+        user.refresh_from_db()
+        assert user.sobriety_date == datetime.date(2024, 1, 15)
+
+    def test_set_sobriety_date_empty(self, client: Client, user: User) -> None:
+        client.force_login(user)
+        response = client.post("/dashboard/set-sobriety-date/", {"sobriety_date": ""})
+        assert response.status_code == 302
+        user.refresh_from_db()
+        assert user.sobriety_date is None
+
+    def test_set_sobriety_date_future_rejected(self, client: Client, user: User) -> None:
+        client.force_login(user)
+        future = (timezone.now().date() + datetime.timedelta(days=10)).isoformat()
+        response = client.post("/dashboard/set-sobriety-date/", {"sobriety_date": future})
+        assert response.status_code == 302
+        user.refresh_from_db()
+        assert user.sobriety_date is None
+
+    def test_set_sobriety_date_invalid_format(self, client: Client, user: User) -> None:
+        client.force_login(user)
+        response = client.post("/dashboard/set-sobriety-date/", {"sobriety_date": "not-a-date"})
+        assert response.status_code == 302
+        user.refresh_from_db()
+        assert user.sobriety_date is None

@@ -1,0 +1,29 @@
+<!-- Recent Activity Widget -->
+<div class="bg-ps-card border border-ps-border rounded-xl p-6">
+    <div class="flex items-center gap-3 mb-4">
+        <div class="p-2 bg-violet-500/20 rounded-lg">
+            <i data-lucide="activity" class="w-5 h-5 text-violet-400"></i>
+        </div>
+        <h3 class="text-lg font-semibold text-white">Recent Activity</h3>
+    </div>
+
+    {% if recent_responses %}
+        <ul class="space-y-3">
+            {% for resp in recent_responses %}
+                <li class="flex items-start gap-3">
+                    <div class="mt-1 w-2 h-2 rounded-full bg-ps-accent flex-shrink-0"></div>
+                    <div class="min-w-0">
+                        <a href="{% url 'step_detail' resp.question.step.number %}"
+                           class="text-sm text-gray-300 hover:text-white transition-colors">
+                            Step {{ resp.question.step.number }}, Q{{ resp.question.number }}
+                        </a>
+                        <p class="text-xs text-ps-muted truncate">{{ resp.answer|truncatewords:12 }}</p>
+                        <p class="text-xs text-ps-muted">{{ resp.updated_at|timesince }} ago</p>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p class="text-ps-muted text-sm">No activity yet. Start your step work to see progress here.</p>
+    {% endif %}
+</div>
