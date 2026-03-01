@@ -48,3 +48,10 @@ pip-cache/
 
 # Embedded repos
 ralph-claude-code/
+
+# Claude session files
+.ralph/.claude_session_id
+.ralph/.response_analysis
+
+# Windows paths (ignore cross-platform artifacts)
+C\:\\*
