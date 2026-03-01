@@ -37,8 +37,9 @@
                 <i data-lucide="sparkles" class="w-5 h-5"></i>
                 Gratitude Journal
             </a>
-            <a href="#"
-               class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white transition-colors">
+            <a href="{% url 'person_list' %}"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+                      {% if request.resolver_match.url_name == 'person_list' or request.resolver_match.url_name == 'person_detail' or request.resolver_match.url_name == 'person_create' or request.resolver_match.url_name == 'person_update' %}bg-ps-accent/20 text-ps-accent-hover{% else %}text-gray-300 hover:bg-white/5 hover:text-white{% endif %}">
                 <i data-lucide="handshake" class="w-5 h-5"></i>
                 Amends List
             </a>

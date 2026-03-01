@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     "core",
     "steps",
     "journal",
+    "amends",
 ]
 
 MIDDLEWARE = [

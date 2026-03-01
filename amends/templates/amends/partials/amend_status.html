@@ -1,0 +1,12 @@
+<!-- Amend status badge -->
+{% if status == "amend_made" %}
+<span class="px-2.5 py-1 text-xs font-medium rounded-full bg-emerald-500/20 text-emerald-400">Amend Made</span>
+{% elif status == "ongoing" %}
+<span class="px-2.5 py-1 text-xs font-medium rounded-full bg-blue-500/20 text-blue-400">Ongoing</span>
+{% elif status == "discussed" %}
+<span class="px-2.5 py-1 text-xs font-medium rounded-full bg-violet-500/20 text-violet-400">Discussed</span>
+{% elif status == "letter_drafted" %}
+<span class="px-2.5 py-1 text-xs font-medium rounded-full bg-amber-500/20 text-amber-400">Letter Drafted</span>
+{% else %}
+<span class="px-2.5 py-1 text-xs font-medium rounded-full bg-gray-500/20 text-gray-400">Not Started</span>
+{% endif %}

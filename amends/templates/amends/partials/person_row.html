@@ -1,0 +1,18 @@
+<!-- Single person row on the amends list -->
+<a href="{% url 'person_detail' person.pk %}"
+   class="block bg-ps-card border border-ps-border rounded-xl p-4 hover:border-ps-accent/50 transition-colors">
+    <div class="flex items-center justify-between">
+        <div class="flex items-center gap-4 min-w-0">
+            <div>
+                <p class="text-white font-medium">{{ person.name }}</p>
+                {% if person.relationship %}
+                <p class="text-xs text-ps-muted">{{ person.relationship }}</p>
+                {% endif %}
+            </div>
+        </div>
+        <div class="flex items-center gap-3 flex-shrink-0">
+            {% include "amends/partials/amend_status.html" with status=person.current_status %}
+            <i data-lucide="chevron-right" class="w-5 h-5 text-ps-muted"></i>
+        </div>
+    </div>
+</a>

@@ -206,34 +206,34 @@
 
 ---
 
-## Phase 10 — Amends Management (Steps 8 & 9)
+## Phase 10 — Amends Management (Steps 8 & 9) (COMPLETE)
 
 **Goal**: Users can build and manage their amends list, track amends progress, and write private letters.
 
 ### Tasks
-- [ ] Create the `amends` app with `python manage.py startapp amends`
-- [ ] Add `amends` to `INSTALLED_APPS`
-- [ ] Implement `amends/models.py` — Person model (user, name, relationship, how_harmed, willingness_level, order) and Amend model (person, status choices [not_started/letter_drafted/discussed/amend_made/ongoing], anger_letter, apology_letter, actionable_amends, sponsor_feedback, post_amend_reflection, created_at, updated_at)
-- [ ] Run migrations: `python manage.py makemigrations amends && python manage.py migrate`
-- [ ] Implement `amends/forms.py` — PersonForm (ModelForm), AmendForm (ModelForm for status/letters/feedback/results)
-- [ ] Implement `amends/views.py` — PersonListView (all people with status summary), PersonCreateView, PersonDetailView (full amend workflow), PersonUpdateView, PersonDeleteView (with confirmation), AmendCreateView, AmendUpdateView
-- [ ] Create `amends/templates/amends/person_list.html` — table/list of people, status, willingness, "Add Person" button, status filter
-- [ ] Create `amends/templates/amends/person_form.html` — add/edit person form
-- [ ] Create `amends/templates/amends/person_detail.html` — Step 8 info (how harmed), Step 9 amend tracking (status progression, anger letter editor with "DO NOT SEND" warning, apology letter editor, actionable amends, sponsor feedback, post-amend reflection), timeline of status changes
-- [ ] Create `amends/templates/amends/partials/person_row.html` and `amends/templates/amends/partials/amend_status.html`
-- [ ] HTMX interactions: status update via `hx-post` inline
-- [ ] Configure URLs: `/amends/` → PersonListView, `/amends/add/` → PersonCreateView, `/amends/<uuid:pk>/` → PersonDetailView, `/amends/<uuid:pk>/edit/` → PersonUpdateView, `/amends/<uuid:pk>/delete/` → PersonDeleteView, `/amends/<uuid:pk>/amend/` → AmendCreateView, `/amends/<uuid:pk>/amend/<uuid:amend_pk>/edit/` → AmendUpdateView
-- [ ] Update sidebar "Amends List" link to point to `/amends/` with active highlighting
-- [ ] Register models in `amends/admin.py`
-- [ ] Write tests for amends models, views, and status progression
+- [x] Create the `amends` app with `python manage.py startapp amends`
+- [x] Add `amends` to `INSTALLED_APPS`
+- [x] Implement `amends/models.py` — Person model (user, name, relationship, how_harmed, willingness_level, order) and Amend model (person, status choices [not_started/letter_drafted/discussed/amend_made/ongoing], anger_letter, apology_letter, actionable_amends, sponsor_feedback, post_amend_reflection, created_at, updated_at)
+- [x] Run migrations: `python manage.py makemigrations amends && python manage.py migrate`
+- [x] Implement `amends/forms.py` — PersonForm (ModelForm), AmendForm (ModelForm for status/letters/feedback/results)
+- [x] Implement `amends/views.py` — PersonListView (all people with status summary), PersonCreateView, PersonDetailView (full amend workflow), PersonUpdateView, PersonDeleteView (with confirmation), AmendCreateView, AmendUpdateView
+- [x] Create `amends/templates/amends/person_list.html` — table/list of people, status, willingness, "Add Person" button, status filter
+- [x] Create `amends/templates/amends/person_form.html` — add/edit person form
+- [x] Create `amends/templates/amends/person_detail.html` — Step 8 info (how harmed), Step 9 amend tracking (status progression, anger letter editor with "DO NOT SEND" warning, apology letter editor, actionable amends, sponsor feedback, post-amend reflection), timeline of status changes
+- [x] Create `amends/templates/amends/partials/person_row.html` and `amends/templates/amends/partials/amend_status.html`
+- [x] HTMX interactions: status update via `hx-post` inline
+- [x] Configure URLs: `/amends/` → PersonListView, `/amends/add/` → PersonCreateView, `/amends/<uuid:pk>/` → PersonDetailView, `/amends/<uuid:pk>/edit/` → PersonUpdateView, `/amends/<uuid:pk>/delete/` → PersonDeleteView, `/amends/<uuid:pk>/amend/` → AmendCreateView
+- [x] Update sidebar "Amends List" link to point to `/amends/` with active highlighting
+- [x] Register models in `amends/admin.py`
+- [x] Write tests for amends models, views, and status progression
 
 ### Verification
-- [ ] `/amends/` shows amends list with status for each person
-- [ ] Can add, edit, and delete people from the list
-- [ ] Person detail shows full amend workflow
-- [ ] Letters can be written and saved (with "DO NOT SEND" warnings)
-- [ ] Amend status can be updated through the progression
-- [ ] Sponsor feedback field is available
+- [x] `/amends/` shows amends list with status for each person
+- [x] Can add, edit, and delete people from the list
+- [x] Person detail shows full amend workflow
+- [x] Letters can be written and saved (with "DO NOT SEND" warnings)
+- [x] Amend status can be updated through the progression
+- [x] Sponsor feedback field is available
 
 ---
 
