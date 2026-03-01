@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Gratitude History — Powerful Silence{% endblock %}
+
+{% block page_title %}Gratitude History{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-xl font-bold text-white">Gratitude History</h2>
+        <a href="{% url 'gratitude' %}"
+           class="inline-flex items-center gap-2 px-4 py-2 bg-ps-accent hover:bg-ps-accent-hover text-white text-sm font-medium rounded-lg transition-colors">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            Today's Gratitude
+        </a>
+    </div>
+
+    {% if grouped_entries %}
+    <div class="space-y-6">
+        {% for date, day_entries in grouped_entries.items %}
+        <div class="bg-ps-card border border-ps-border rounded-xl p-5">
+            <h3 class="text-white font-medium mb-3">{{ date|date:"l, F j, Y" }}</h3>
+            <ul class="space-y-2">
+                {% for entry in day_entries %}
+                <li class="flex items-center gap-3">
+                    <span class="text-pink-400 text-sm font-bold">{{ forloop.counter }}.</span>
+                    <span class="text-gray-300 text-sm">{{ entry.entry }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div class="flex items-center justify-center gap-4 mt-8">
+        {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}"
+           class="px-4 py-2 bg-ps-card border border-ps-border rounded-lg text-sm text-gray-300 hover:text-white transition-colors">
+            Previous
+        </a>
+        {% endif %}
+        <span class="text-sm text-ps-muted">
+            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+        </span>
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}"
+           class="px-4 py-2 bg-ps-card border border-ps-border rounded-lg text-sm text-gray-300 hover:text-white transition-colors">
+            Next
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="bg-ps-card border border-ps-border rounded-xl p-8 text-center">
+        <i data-lucide="sparkles" class="w-12 h-12 text-ps-muted mx-auto mb-3"></i>
+        <p class="text-gray-300 mb-2">No gratitude entries yet.</p>
+        <p class="text-sm text-ps-muted mb-4">Start building your gratitude practice today.</p>
+        <a href="{% url 'gratitude' %}"
+           class="inline-flex items-center gap-2 px-4 py-2 bg-ps-accent hover:bg-ps-accent-hover text-white text-sm font-medium rounded-lg transition-colors">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            Add Gratitude
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

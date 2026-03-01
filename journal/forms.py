@@ -1,6 +1,6 @@
 from django import forms
 
-from journal.models import DailyInventory
+from journal.models import DailyInventory, GratitudeEntry
 
 
 class DailyInventoryForm(forms.ModelForm):
@@ -53,5 +53,18 @@ class DailyInventoryForm(forms.ModelForm):
                 "rows": 3,
                 "placeholder": "Anything else on your mind...",
                 "class": "w-full px-3 py-2 bg-ps-bg border border-ps-border rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-ps-accent",
+            }),
+        }
+
+
+class GratitudeEntryForm(forms.ModelForm):
+    class Meta:
+        model = GratitudeEntry
+        fields = ["entry"]
+        widgets = {
+            "entry": forms.TextInput(attrs={
+                "placeholder": "What are you grateful for?",
+                "class": "w-full px-4 py-2.5 bg-ps-bg border border-ps-border rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-ps-accent",
+                "autocomplete": "off",
             }),
         }

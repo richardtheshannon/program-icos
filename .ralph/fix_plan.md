@@ -181,28 +181,28 @@
 
 ---
 
-## Phase 9 — Gratitude Journal
+## Phase 9 — Gratitude Journal (COMPLETE)
 
 **Goal**: Users can record daily gratitude entries, view history, and build a gratitude practice.
 
 ### Tasks
-- [ ] Implement `journal/views.py` additions — GratitudeView (today's list + inline add), GratitudeAddView (HTMX POST), GratitudeDeleteView (HTMX DELETE), GratitudeHistoryView (browse by date)
-- [ ] Implement `journal/forms.py` additions — GratitudeEntryForm (simple ModelForm, just the entry text field)
-- [ ] Create `journal/templates/journal/gratitude.html` — today's date, list of entries, inline "Add gratitude" input with HTMX POST, delete buttons, prompt "What are you grateful for today?"
-- [ ] Create `journal/templates/journal/gratitude_history.html` — browse by week/month, entries grouped by date
-- [ ] Create `journal/templates/journal/partials/gratitude_entry.html` — single entry row (for HTMX swap on add/delete)
-- [ ] HTMX interactions: add entry via `hx-post`, delete entry via `hx-delete`, no page reload
-- [ ] Configure URLs: `/journal/gratitude/` → GratitudeView, `/journal/gratitude/add/` → GratitudeAddView, `/journal/gratitude/<uuid:pk>/delete/` → GratitudeDeleteView, `/journal/gratitude/history/` → GratitudeHistoryView
-- [ ] Update sidebar "Gratitude Journal" link to point to `/journal/gratitude/` with active highlighting
-- [ ] Update dashboard gratitude count widget
-- [ ] Write tests for gratitude views and HTMX interactions
+- [x] Implement `journal/views.py` additions — GratitudeView (today's list + inline add), GratitudeAddView (HTMX POST), GratitudeDeleteView (HTMX DELETE), GratitudeHistoryView (browse by date)
+- [x] Implement `journal/forms.py` additions — GratitudeEntryForm (simple ModelForm, just the entry text field)
+- [x] Create `journal/templates/journal/gratitude.html` — today's date, list of entries, inline "Add gratitude" input with HTMX POST, delete buttons, prompt "What are you grateful for today?"
+- [x] Create `journal/templates/journal/gratitude_history.html` — browse by week/month, entries grouped by date
+- [x] Create `journal/templates/journal/partials/gratitude_entry.html` — single entry row (for HTMX swap on add/delete)
+- [x] HTMX interactions: add entry via `hx-post`, delete entry via `hx-delete`, no page reload
+- [x] Configure URLs: `/journal/gratitude/` → GratitudeView, `/journal/gratitude/add/` → GratitudeAddView, `/journal/gratitude/<uuid:pk>/delete/` → GratitudeDeleteView, `/journal/gratitude/history/` → GratitudeHistoryView
+- [x] Update sidebar "Gratitude Journal" link to point to `/journal/gratitude/` with active highlighting
+- [x] Update dashboard gratitude count widget
+- [x] Write tests for gratitude views and HTMX interactions
 
 ### Verification
-- [ ] `/journal/gratitude/` shows today's gratitude list
-- [ ] Adding an entry works inline (no page reload)
-- [ ] Deleting an entry removes it inline
-- [ ] History view shows past entries grouped by date
-- [ ] Dashboard shows today's gratitude entry count
+- [x] `/journal/gratitude/` shows today's gratitude list
+- [x] Adding an entry works inline (no page reload)
+- [x] Deleting an entry removes it inline
+- [x] History view shows past entries grouped by date
+- [x] Dashboard shows today's gratitude entry count
 
 ---
 

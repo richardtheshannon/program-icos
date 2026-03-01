@@ -7,8 +7,8 @@ from django.utils import timezone
 from django.views import View
 from django.views.generic import ListView
 
-from journal.forms import DailyInventoryForm
-from journal.models import DailyInventory
+from journal.forms import DailyInventoryForm, GratitudeEntryForm
+from journal.models import DailyInventory, GratitudeEntry
 
 
 class DailyCheckinView(View):
@@ -80,3 +80,82 @@ class StreakView(View):
         return render(request, "journal/partials/streak_widget.html", {
             "streak": streak,
         })
+
+
+class GratitudeView(View):
+    """Today's gratitude list with inline add form."""
+
+    def get(self, request: HttpRequest) -> HttpResponse:
+        today = timezone.now().date()
+        entries = GratitudeEntry.objects.filter(user=request.user, date=today)
+        form = GratitudeEntryForm()
+        return render(request, "journal/gratitude.html", {
+            "entries": entries,
+            "form": form,
+            "gratitude_date": today,
+        })
+
+
+class GratitudeAddView(View):
+    """HTMX POST: add a gratitude entry and return the updated list."""
+
+    def post(self, request: HttpRequest) -> HttpResponse:
+        today = timezone.now().date()
+        form = GratitudeEntryForm(request.POST)
+        if form.is_valid():
+            entry = form.save(commit=False)
+            entry.user = request.user
+            entry.date = today
+            # Set order to next available
+            max_order = (
+                GratitudeEntry.objects.filter(user=request.user, date=today)
+                .order_by("-order")
+                .values_list("order", flat=True)
+                .first()
+            ) or 0
+            entry.order = max_order + 1
+            entry.save()
+        # Return the full entry list partial for HTMX swap
+        entries = GratitudeEntry.objects.filter(user=request.user, date=today)
+        return render(request, "journal/partials/gratitude_list.html", {
+            "entries": entries,
+            "form": GratitudeEntryForm(),
+        })
+
+
+class GratitudeDeleteView(View):
+    """HTMX DELETE: remove a gratitude entry and return the updated list."""
+
+    def delete(self, request: HttpRequest, pk: str) -> HttpResponse:
+        today = timezone.now().date()
+        GratitudeEntry.objects.filter(pk=pk, user=request.user).delete()
+        entries = GratitudeEntry.objects.filter(user=request.user, date=today)
+        return render(request, "journal/partials/gratitude_list.html", {
+            "entries": entries,
+            "form": GratitudeEntryForm(),
+        })
+
+
+class GratitudeHistoryView(ListView):
+    """Browse past gratitude entries grouped by date."""
+
+    model = GratitudeEntry
+    template_name = "journal/gratitude_history.html"
+    context_object_name = "entries"
+    paginate_by = 50
+
+    def get_queryset(self):
+        return (
+            GratitudeEntry.objects.filter(user=self.request.user)
+            .order_by("-date", "order")
+        )
+
+    def get_context_data(self, **kwargs: object) -> dict:
+        context = super().get_context_data(**kwargs)
+        # Group entries by date for display
+        entries = context["entries"]
+        grouped: dict[datetime.date, list[GratitudeEntry]] = {}
+        for entry in entries:
+            grouped.setdefault(entry.date, []).append(entry)
+        context["grouped_entries"] = dict(sorted(grouped.items(), reverse=True))
+        return context

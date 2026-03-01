@@ -8,7 +8,7 @@ from django.utils import timezone
 from django.views import View
 from django.views.generic import TemplateView
 
-from journal.models import DailyInventory
+from journal.models import DailyInventory, GratitudeEntry
 from steps.models import Response, Step, StepProgress
 
 
@@ -74,6 +74,9 @@ class DashboardView(TemplateView):
         todays_checkin = DailyInventory.objects.filter(user=user, date=today).first()
         checkin_streak = DailyInventory.current_streak(user)
 
+        # Gratitude count for today
+        gratitude_count = GratitudeEntry.objects.filter(user=user, date=today).count()
+
         context.update({
             "steps_complete": steps_complete,
             "overall_percentage": overall_percentage,
@@ -84,6 +87,7 @@ class DashboardView(TemplateView):
             "today": today,
             "todays_checkin": todays_checkin,
             "checkin_streak": checkin_streak,
+            "gratitude_count": gratitude_count,
         })
         return context
 

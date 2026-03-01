@@ -1,0 +1,24 @@
+<!-- Gratitude entries list + add form (HTMX swappable) -->
+{% if entries %}
+<ul class="space-y-2 mb-4">
+    {% for entry in entries %}
+    {% include "journal/partials/gratitude_entry.html" %}
+    {% endfor %}
+</ul>
+{% else %}
+<p class="text-ps-muted text-sm mb-4">No entries yet. Add your first gratitude below.</p>
+{% endif %}
+
+<!-- Inline add form -->
+<form hx-post="{% url 'gratitude_add' %}"
+      hx-target="#gratitude-list"
+      hx-swap="innerHTML"
+      class="flex gap-2">
+    {% csrf_token %}
+    {{ form.entry }}
+    <button type="submit"
+            class="px-4 py-2.5 bg-ps-accent hover:bg-ps-accent-hover text-white text-sm font-medium rounded-lg transition-colors whitespace-nowrap">
+        <i data-lucide="plus" class="w-4 h-4 inline"></i>
+        Add
+    </button>
+</form>

@@ -196,3 +196,138 @@ class TestDashboardCheckinWidget:
         response = client.get("/dashboard/")
         assert b"Complete" in response.content
         assert b"Serenity: 7/10" in response.content
+
+
+@pytest.mark.django_db
+class TestGratitudeView:
+
+    @pytest.fixture
+    def user(self) -> User:
+        return User.objects.create_user(username="gratview", password="testpass123")
+
+    def test_gratitude_requires_login(self, client: Client) -> None:
+        response = client.get("/journal/gratitude/")
+        assert response.status_code == 302
+        assert "/login/" in response.url
+
+    def test_gratitude_page_renders(self, client: Client, user: User) -> None:
+        client.force_login(user)
+        response = client.get("/journal/gratitude/")
+        assert response.status_code == 200
+        assert b"What are you grateful for today?" in response.content
+
+    def test_gratitude_shows_entries(self, client: Client, user: User) -> None:
+        today = timezone.now().date()
+        GratitudeEntry.objects.create(user=user, date=today, entry="Sunshine", order=1)
+        client.force_login(user)
+        response = client.get("/journal/gratitude/")
+        assert b"Sunshine" in response.content
+
+    def test_gratitude_empty_state(self, client: Client, user: User) -> None:
+        client.force_login(user)
+        response = client.get("/journal/gratitude/")
+        assert b"No entries yet" in response.content
+
+
+@pytest.mark.django_db
+class TestGratitudeAddView:
+
+    @pytest.fixture
+    def user(self) -> User:
+        return User.objects.create_user(username="gratadd", password="testpass123")
+
+    def test_add_creates_entry(self, client: Client, user: User) -> None:
+        client.force_login(user)
+        response = client.post("/journal/gratitude/add/", {"entry": "Good coffee"})
+        assert response.status_code == 200  # HTMX partial response
+        assert GratitudeEntry.objects.filter(user=user).count() == 1
+        assert GratitudeEntry.objects.first().entry == "Good coffee"
+
+    def test_add_increments_order(self, client: Client, user: User) -> None:
+        today = timezone.now().date()
+        GratitudeEntry.objects.create(user=user, date=today, entry="First", order=1)
+        client.force_login(user)
+        client.post("/journal/gratitude/add/", {"entry": "Second"})
+        second = GratitudeEntry.objects.filter(user=user, entry="Second").first()
+        assert second is not None
+        assert second.order == 2
+
+    def test_add_returns_updated_list(self, client: Client, user: User) -> None:
+        client.force_login(user)
+        response = client.post("/journal/gratitude/add/", {"entry": "A warm bed"})
+        assert b"A warm bed" in response.content
+
+
+@pytest.mark.django_db
+class TestGratitudeDeleteView:
+
+    @pytest.fixture
+    def user(self) -> User:
+        return User.objects.create_user(username="gratdel", password="testpass123")
+
+    def test_delete_removes_entry(self, client: Client, user: User) -> None:
+        today = timezone.now().date()
+        entry = GratitudeEntry.objects.create(user=user, date=today, entry="To delete")
+        client.force_login(user)
+        response = client.delete(f"/journal/gratitude/{entry.pk}/delete/")
+        assert response.status_code == 200
+        assert GratitudeEntry.objects.filter(pk=entry.pk).count() == 0
+
+    def test_delete_other_user_entry_fails(self, client: Client, user: User) -> None:
+        other = User.objects.create_user(username="other", password="testpass123")
+        today = timezone.now().date()
+        entry = GratitudeEntry.objects.create(user=other, date=today, entry="Not yours")
+        client.force_login(user)
+        client.delete(f"/journal/gratitude/{entry.pk}/delete/")
+        # Entry should still exist (belongs to other user)
+        assert GratitudeEntry.objects.filter(pk=entry.pk).count() == 1
+
+
+@pytest.mark.django_db
+class TestGratitudeHistoryView:
+
+    @pytest.fixture
+    def user(self) -> User:
+        return User.objects.create_user(username="grathist", password="testpass123")
+
+    def test_history_requires_login(self, client: Client) -> None:
+        response = client.get("/journal/gratitude/history/")
+        assert response.status_code == 302
+
+    def test_history_shows_grouped_entries(self, client: Client, user: User) -> None:
+        GratitudeEntry.objects.create(
+            user=user, date=datetime.date(2024, 7, 4), entry="Independence", order=1
+        )
+        client.force_login(user)
+        response = client.get("/journal/gratitude/history/")
+        assert response.status_code == 200
+        assert b"July 4, 2024" in response.content
+        assert b"Independence" in response.content
+
+    def test_history_empty_state(self, client: Client, user: User) -> None:
+        client.force_login(user)
+        response = client.get("/journal/gratitude/history/")
+        assert b"No gratitude entries yet" in response.content
+
+
+@pytest.mark.django_db
+class TestDashboardGratitudeWidget:
+
+    @pytest.fixture
+    def user(self) -> User:
+        return User.objects.create_user(username="dashgrat", password="testpass123")
+
+    def test_dashboard_no_gratitude(self, client: Client, user: User) -> None:
+        client.force_login(user)
+        response = client.get("/dashboard/")
+        assert b"No entries yet today" in response.content
+
+    def test_dashboard_with_gratitude(self, client: Client, user: User) -> None:
+        today = timezone.now().date()
+        GratitudeEntry.objects.create(user=user, date=today, entry="Test", order=1)
+        GratitudeEntry.objects.create(user=user, date=today, entry="Test2", order=2)
+        client.force_login(user)
+        response = client.get("/dashboard/")
+        content = response.content.decode()
+        assert "2" in content  # count
+        assert "entries today" in content
