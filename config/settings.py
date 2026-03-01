@@ -70,17 +70,18 @@ WSGI_APPLICATION = "config.wsgi.application"
 # Database — PostgreSQL via DATABASE_URL
 _db_url = config("DATABASE_URL", default="postgresql://user:pass@localhost:5432/db")
 # Parse postgresql://user:password@host:port/dbname
-_db_parts = _db_url.replace("postgresql://", "").split("@")
-_db_user_pass = _db_parts[0].split(":")
-_db_host_port_name = _db_parts[1].split("/")
+_db_stripped = _db_url.replace("postgresql://", "")
+_db_userinfo, _db_hostinfo = _db_stripped.rsplit("@", 1)
+_db_user, _db_pass = _db_userinfo.split(":", 1)
+_db_host_port_name = _db_hostinfo.split("/")
 _db_host_port = _db_host_port_name[0].split(":")
 
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": _db_host_port_name[1],
-        "USER": _db_user_pass[0],
-        "PASSWORD": _db_user_pass[1],
+        "USER": _db_user,
+        "PASSWORD": _db_pass,
         "HOST": _db_host_port[0],
         "PORT": _db_host_port[1] if len(_db_host_port) > 1 else "5432",
     }
