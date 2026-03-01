@@ -51,6 +51,11 @@ class TestUserModel:
 
 @pytest.mark.django_db
 class TestSeedUserCommand:
+    @pytest.fixture(autouse=True)
+    def _seed_env(self, monkeypatch):
+        monkeypatch.setenv("PS01_USER_EMAIL", "test@example.com")
+        monkeypatch.setenv("PS01_USER_PASSWORD", "testpass123")
+
     def test_seed_user_creates_superuser(self) -> None:
         from django.core.management import call_command
         from io import StringIO
