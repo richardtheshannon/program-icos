@@ -1,0 +1,10 @@
+<!-- Streak Widget Partial (HTMX-loadable) -->
+{% if streak > 0 %}
+<div class="flex items-center gap-2">
+    <i data-lucide="flame" class="w-5 h-5 text-amber-400"></i>
+    <span class="text-amber-400 font-bold text-lg">{{ streak }}</span>
+    <span class="text-sm text-amber-400/80">day{{ streak|pluralize }} streak</span>
+</div>
+{% else %}
+<p class="text-sm text-ps-muted">Start your streak today!</p>
+{% endif %}

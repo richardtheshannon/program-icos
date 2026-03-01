@@ -6,9 +6,33 @@
         </div>
         <h3 class="text-lg font-semibold text-white">Today's Check-In</h3>
     </div>
-    <p class="text-ps-muted text-sm mb-3">Daily inventory and reflection — coming in the next update.</p>
-    <div class="flex items-center gap-2 text-ps-muted text-xs">
-        <i data-lucide="clock" class="w-4 h-4"></i>
-        <span>Steps 10 & 11 daily practice</span>
+
+    {% if todays_checkin %}
+        <div class="flex items-center gap-2 mb-3">
+            <i data-lucide="check-circle" class="w-5 h-5 text-emerald-400"></i>
+            <span class="text-emerald-400 font-medium">Complete</span>
+        </div>
+        <div class="flex items-center gap-4 text-sm text-ps-muted mb-3">
+            <span>Serenity: {{ todays_checkin.serenity_level }}/10</span>
+            <span>Mood: {{ todays_checkin.mood }}/10</span>
+        </div>
+    {% else %}
+        <div class="flex items-center gap-2 mb-3">
+            <i data-lucide="circle" class="w-5 h-5 text-ps-muted"></i>
+            <span class="text-ps-muted">Not yet completed</span>
+        </div>
+    {% endif %}
+
+    {% if checkin_streak > 0 %}
+    <div class="flex items-center gap-2 mb-3">
+        <i data-lucide="flame" class="w-4 h-4 text-amber-400"></i>
+        <span class="text-sm text-amber-400">{{ checkin_streak }} day{{ checkin_streak|pluralize }} streak</span>
     </div>
+    {% endif %}
+
+    <a href="{% url 'daily_checkin' %}"
+       class="inline-flex items-center gap-2 px-4 py-2 bg-ps-accent hover:bg-ps-accent-hover text-white text-sm font-medium rounded-lg transition-colors">
+        <i data-lucide="{% if todays_checkin %}edit{% else %}plus{% endif %}" class="w-4 h-4"></i>
+        {% if todays_checkin %}Review Check-In{% else %}Start Check-In{% endif %}
+    </a>
 </div>

@@ -1,0 +1,198 @@
+import datetime
+
+import pytest
+from django.test import Client
+from django.utils import timezone
+
+from core.models import User
+from journal.models import DailyInventory, GratitudeEntry
+
+
+@pytest.mark.django_db
+class TestDailyInventoryModel:
+
+    @pytest.fixture
+    def user(self) -> User:
+        return User.objects.create_user(username="journaluser", password="testpass123")
+
+    def test_create_inventory(self, user: User) -> None:
+        inv = DailyInventory.objects.create(
+            user=user, date=timezone.now().date(), serenity_level=7, mood=8
+        )
+        assert inv.serenity_level == 7
+        assert inv.mood == 8
+        assert inv.was_resentful is False
+
+    def test_unique_per_user_per_date(self, user: User) -> None:
+        today = timezone.now().date()
+        DailyInventory.objects.create(user=user, date=today)
+        with pytest.raises(Exception):
+            DailyInventory.objects.create(user=user, date=today)
+
+    def test_str(self, user: User) -> None:
+        inv = DailyInventory.objects.create(user=user, date=datetime.date(2024, 6, 15))
+        assert "2024-06-15" in str(inv)
+
+
+@pytest.mark.django_db
+class TestStreakCalculation:
+
+    @pytest.fixture
+    def user(self) -> User:
+        return User.objects.create_user(username="streakuser", password="testpass123")
+
+    def test_no_entries_returns_zero(self, user: User) -> None:
+        assert DailyInventory.current_streak(user) == 0
+
+    def test_today_only(self, user: User) -> None:
+        DailyInventory.objects.create(user=user, date=timezone.now().date())
+        assert DailyInventory.current_streak(user) == 1
+
+    def test_consecutive_days(self, user: User) -> None:
+        today = timezone.now().date()
+        for i in range(5):
+            DailyInventory.objects.create(user=user, date=today - datetime.timedelta(days=i))
+        assert DailyInventory.current_streak(user) == 5
+
+    def test_gap_breaks_streak(self, user: User) -> None:
+        today = timezone.now().date()
+        DailyInventory.objects.create(user=user, date=today)
+        DailyInventory.objects.create(user=user, date=today - datetime.timedelta(days=1))
+        # Skip day 2, add day 3
+        DailyInventory.objects.create(user=user, date=today - datetime.timedelta(days=3))
+        assert DailyInventory.current_streak(user) == 2
+
+    def test_yesterday_starts_streak(self, user: User) -> None:
+        today = timezone.now().date()
+        DailyInventory.objects.create(user=user, date=today - datetime.timedelta(days=1))
+        DailyInventory.objects.create(user=user, date=today - datetime.timedelta(days=2))
+        assert DailyInventory.current_streak(user) == 2
+
+    def test_old_entry_no_streak(self, user: User) -> None:
+        DailyInventory.objects.create(
+            user=user, date=timezone.now().date() - datetime.timedelta(days=10)
+        )
+        assert DailyInventory.current_streak(user) == 0
+
+
+@pytest.mark.django_db
+class TestGratitudeEntryModel:
+
+    @pytest.fixture
+    def user(self) -> User:
+        return User.objects.create_user(username="gratuser", password="testpass123")
+
+    def test_create_entry(self, user: User) -> None:
+        entry = GratitudeEntry.objects.create(
+            user=user, date=timezone.now().date(), entry="Grateful for sunlight"
+        )
+        assert "Grateful for sunlight" in str(entry)
+
+
+@pytest.mark.django_db
+class TestDailyCheckinView:
+
+    @pytest.fixture
+    def user(self) -> User:
+        return User.objects.create_user(username="checkinview", password="testpass123")
+
+    def test_checkin_requires_login(self, client: Client) -> None:
+        response = client.get("/journal/")
+        assert response.status_code == 302
+        assert "/login/" in response.url
+
+    def test_checkin_get_empty(self, client: Client, user: User) -> None:
+        client.force_login(user)
+        response = client.get("/journal/")
+        assert response.status_code == 200
+        assert b"Step 10" in response.content
+
+    def test_checkin_post_creates_inventory(self, client: Client, user: User) -> None:
+        client.force_login(user)
+        response = client.post("/journal/", {
+            "serenity_level": "7",
+            "mood": "8",
+            "was_resentful": "",
+            "was_selfish": "",
+            "was_dishonest": "",
+        })
+        assert response.status_code == 302
+        assert DailyInventory.objects.filter(user=user).count() == 1
+        inv = DailyInventory.objects.get(user=user)
+        assert inv.serenity_level == 7
+        assert inv.mood == 8
+
+    def test_checkin_prepopulates_existing(self, client: Client, user: User) -> None:
+        today = timezone.now().date()
+        DailyInventory.objects.create(
+            user=user, date=today, serenity_level=3, mood=4,
+            was_resentful=True, resentful_details="Test resentment"
+        )
+        client.force_login(user)
+        response = client.get("/journal/")
+        assert response.status_code == 200
+        assert b"Test resentment" in response.content
+
+    def test_checkin_specific_date(self, client: Client, user: User) -> None:
+        client.force_login(user)
+        response = client.get("/journal/2024-06-15/")
+        assert response.status_code == 200
+
+    def test_checkin_post_updates_existing(self, client: Client, user: User) -> None:
+        today = timezone.now().date()
+        DailyInventory.objects.create(user=user, date=today, serenity_level=3, mood=4)
+        client.force_login(user)
+        response = client.post("/journal/", {
+            "serenity_level": "9",
+            "mood": "10",
+        })
+        assert response.status_code == 302
+        inv = DailyInventory.objects.get(user=user, date=today)
+        assert inv.serenity_level == 9
+
+
+@pytest.mark.django_db
+class TestJournalHistoryView:
+
+    @pytest.fixture
+    def user(self) -> User:
+        return User.objects.create_user(username="historyuser", password="testpass123")
+
+    def test_history_requires_login(self, client: Client) -> None:
+        response = client.get("/journal/history/")
+        assert response.status_code == 302
+
+    def test_history_shows_entries(self, client: Client, user: User) -> None:
+        DailyInventory.objects.create(user=user, date=datetime.date(2024, 6, 15))
+        client.force_login(user)
+        response = client.get("/journal/history/")
+        assert response.status_code == 200
+        assert b"June 15, 2024" in response.content
+
+    def test_history_empty_state(self, client: Client, user: User) -> None:
+        client.force_login(user)
+        response = client.get("/journal/history/")
+        assert response.status_code == 200
+        assert b"No check-ins yet" in response.content
+
+
+@pytest.mark.django_db
+class TestDashboardCheckinWidget:
+
+    @pytest.fixture
+    def user(self) -> User:
+        return User.objects.create_user(username="dashcheckin", password="testpass123")
+
+    def test_dashboard_shows_checkin_not_complete(self, client: Client, user: User) -> None:
+        client.force_login(user)
+        response = client.get("/dashboard/")
+        assert b"Not yet completed" in response.content
+
+    def test_dashboard_shows_checkin_complete(self, client: Client, user: User) -> None:
+        DailyInventory.objects.create(
+            user=user, date=timezone.now().date(), serenity_level=7, mood=8
+        )
+        client.force_login(user)
+        response = client.get("/dashboard/")
+        assert b"Complete" in response.content
+        assert b"Serenity: 7/10" in response.content

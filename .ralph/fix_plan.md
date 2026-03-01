@@ -149,35 +149,35 @@
 
 ---
 
-## Phase 8 — Daily Check-In (Journal App)
+## Phase 8 — Daily Check-In (Journal App) (COMPLETE)
 
 **Goal**: Users can complete a daily Step 10/11 inventory and track streaks.
 
 ### Tasks
-- [ ] Create the `journal` app with `python manage.py startapp journal`
-- [ ] Add `journal` to `INSTALLED_APPS`
-- [ ] Implement `journal/models.py` — DailyInventory model (as defined in Implementation Guide Data Models): user, date, serenity_level (1-10), was_resentful, resentful_details, was_selfish, selfish_details, was_dishonest, dishonest_details, did_pray, did_meditate, spiritual_notes, mood (1-10), additional_notes
-- [ ] Implement `journal/models.py` — GratitudeEntry model: user, date, entry (text), order, created_at
-- [ ] Run migrations: `python manage.py makemigrations journal && python manage.py migrate`
-- [ ] Implement `journal/forms.py` — DailyInventoryForm (ModelForm, conditional fields: show details only if toggle is True via Alpine.js)
-- [ ] Implement `journal/views.py` — DailyCheckinView (GET: load today's inventory or blank / POST: save), JournalHistoryView (paginated past entries), StreakView (HTMX partial for consecutive days streak)
-- [ ] Create `journal/templates/journal/daily_checkin.html` — date, Step 10 section (serenity, resentful/selfish/dishonest toggles with conditional details), Step 11 section (prayer/meditation checkboxes, spiritual notes), mood slider, save button
-- [ ] Create `journal/templates/journal/history.html` — calendar or list view of past entries, click to view/edit
-- [ ] Create `journal/templates/journal/partials/streak_widget.html` — current streak count display
-- [ ] Configure URLs: `/journal/` → DailyCheckinView, `/journal/history/` → JournalHistoryView, `/journal/<date>/` → DailyCheckinView for specific date
-- [ ] Update sidebar "Daily Check-In" link to point to `/journal/` with active highlighting
-- [ ] Update dashboard check-in widget to pull real data
-- [ ] Register models in `journal/admin.py`
-- [ ] Write tests for journal models, views, and streak calculation
+- [x] Create the `journal` app with `python manage.py startapp journal`
+- [x] Add `journal` to `INSTALLED_APPS`
+- [x] Implement `journal/models.py` — DailyInventory model (as defined in Implementation Guide Data Models): user, date, serenity_level (1-10), was_resentful, resentful_details, was_selfish, selfish_details, was_dishonest, dishonest_details, did_pray, did_meditate, spiritual_notes, mood (1-10), additional_notes
+- [x] Implement `journal/models.py` — GratitudeEntry model: user, date, entry (text), order, created_at
+- [x] Run migrations: `python manage.py makemigrations journal && python manage.py migrate`
+- [x] Implement `journal/forms.py` — DailyInventoryForm (ModelForm, conditional fields: show details only if toggle is True via Alpine.js)
+- [x] Implement `journal/views.py` — DailyCheckinView (GET: load today's inventory or blank / POST: save), JournalHistoryView (paginated past entries), StreakView (HTMX partial for consecutive days streak)
+- [x] Create `journal/templates/journal/daily_checkin.html` — date, Step 10 section (serenity, resentful/selfish/dishonest toggles with conditional details), Step 11 section (prayer/meditation checkboxes, spiritual notes), mood slider, save button
+- [x] Create `journal/templates/journal/history.html` — calendar or list view of past entries, click to view/edit
+- [x] Create `journal/templates/journal/partials/streak_widget.html` — current streak count display
+- [x] Configure URLs: `/journal/` → DailyCheckinView, `/journal/history/` → JournalHistoryView, `/journal/<date>/` → DailyCheckinView for specific date
+- [x] Update sidebar "Daily Check-In" link to point to `/journal/` with active highlighting
+- [x] Update dashboard check-in widget to pull real data
+- [x] Register models in `journal/admin.py`
+- [x] Write tests for journal models, views, and streak calculation
 
 ### Verification
-- [ ] `/journal/` shows today's daily check-in form
-- [ ] Saving persists all fields
-- [ ] Returning shows pre-filled form for today
-- [ ] Conditional fields show/hide with Alpine.js
-- [ ] `/journal/history/` shows past entries
-- [ ] Streak calculation works (consecutive days)
-- [ ] Dashboard check-in widget shows today's status
+- [x] `/journal/` shows today's daily check-in form
+- [x] Saving persists all fields
+- [x] Returning shows pre-filled form for today
+- [x] Conditional fields show/hide with Alpine.js
+- [x] `/journal/history/` shows past entries
+- [x] Streak calculation works (consecutive days)
+- [x] Dashboard check-in widget shows today's status
 
 ---
 

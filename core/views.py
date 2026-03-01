@@ -8,6 +8,7 @@ from django.utils import timezone
 from django.views import View
 from django.views.generic import TemplateView
 
+from journal.models import DailyInventory
 from steps.models import Response, Step, StepProgress
 
 
@@ -68,6 +69,11 @@ class DashboardView(TemplateView):
             .order_by("-updated_at")[:5]
         )
 
+        # Daily check-in status
+        today = timezone.now().date()
+        todays_checkin = DailyInventory.objects.filter(user=user, date=today).first()
+        checkin_streak = DailyInventory.current_streak(user)
+
         context.update({
             "steps_complete": steps_complete,
             "overall_percentage": overall_percentage,
@@ -75,7 +81,9 @@ class DashboardView(TemplateView):
             "current_step": current_step,
             "sobriety_breakdown": sobriety_breakdown,
             "recent_responses": recent_responses,
-            "today": timezone.now().date(),
+            "today": today,
+            "todays_checkin": todays_checkin,
+            "checkin_streak": checkin_streak,
         })
         return context
 

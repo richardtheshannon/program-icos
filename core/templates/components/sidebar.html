@@ -25,8 +25,9 @@
                 <i data-lucide="list-ordered" class="w-5 h-5"></i>
                 My Step Work
             </a>
-            <a href="#"
-               class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white transition-colors">
+            <a href="{% url 'daily_checkin' %}"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+                      {% if request.resolver_match.url_name == 'daily_checkin' or request.resolver_match.url_name == 'daily_checkin_date' or request.resolver_match.url_name == 'journal_history' %}bg-ps-accent/20 text-ps-accent-hover{% else %}text-gray-300 hover:bg-white/5 hover:text-white{% endif %}">
                 <i data-lucide="calendar-check" class="w-5 h-5"></i>
                 Daily Check-In
             </a>
