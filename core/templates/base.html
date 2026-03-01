@@ -40,12 +40,21 @@
             main { padding: 0 !important; }
             a { color: black !important; text-decoration: none !important; }
         }
+        /* HTMX loading indicator */
+        .htmx-indicator { opacity: 0; transition: opacity 200ms ease-in; }
+        .htmx-request .htmx-indicator, .htmx-request.htmx-indicator { opacity: 1; }
     </style>
     {% block extra_head %}{% endblock %}
 </head>
 <body class="h-full bg-ps-bg text-gray-200"
       hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
       x-data="{ sidebarOpen: false }">
+
+    <!-- Skip to main content (accessibility) -->
+    <a href="#main-content"
+       class="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-2 focus:left-2 focus:px-4 focus:py-2 focus:bg-ps-accent focus:text-white focus:rounded-lg">
+        Skip to main content
+    </a>
 
     <div class="flex h-full">
         <!-- Sidebar -->
@@ -60,7 +69,7 @@
             {% include "components/messages.html" %}
 
             <!-- Page content -->
-            <main class="flex-1 p-6">
+            <main class="flex-1 p-4 sm:p-6" id="main-content">
                 {% block content %}{% endblock %}
             </main>
         </div>

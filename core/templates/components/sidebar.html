@@ -12,35 +12,40 @@
         </div>
 
         <!-- Navigation links -->
-        <nav class="flex-1 px-4 py-4 space-y-1">
+        <nav class="flex-1 px-4 py-4 space-y-1" aria-label="Main navigation">
             <a href="{% url 'dashboard' %}"
+               {% if request.resolver_match.url_name == 'dashboard' %}aria-current="page"{% endif %}
                class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
                       {% if request.resolver_match.url_name == 'dashboard' %}bg-ps-accent/20 text-ps-accent-hover{% else %}text-gray-300 hover:bg-white/5 hover:text-white{% endif %}">
-                <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                <i data-lucide="layout-dashboard" class="w-5 h-5" aria-hidden="true"></i>
                 Dashboard
             </a>
             <a href="{% url 'step_list' %}"
+               {% if request.resolver_match.url_name == 'step_list' or request.resolver_match.url_name == 'step_detail' %}aria-current="page"{% endif %}
                class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
                       {% if request.resolver_match.url_name == 'step_list' or request.resolver_match.url_name == 'step_detail' %}bg-ps-accent/20 text-ps-accent-hover{% else %}text-gray-300 hover:bg-white/5 hover:text-white{% endif %}">
-                <i data-lucide="list-ordered" class="w-5 h-5"></i>
+                <i data-lucide="list-ordered" class="w-5 h-5" aria-hidden="true"></i>
                 My Step Work
             </a>
             <a href="{% url 'daily_checkin' %}"
+               {% if request.resolver_match.url_name == 'daily_checkin' or request.resolver_match.url_name == 'daily_checkin_date' or request.resolver_match.url_name == 'journal_history' %}aria-current="page"{% endif %}
                class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
                       {% if request.resolver_match.url_name == 'daily_checkin' or request.resolver_match.url_name == 'daily_checkin_date' or request.resolver_match.url_name == 'journal_history' %}bg-ps-accent/20 text-ps-accent-hover{% else %}text-gray-300 hover:bg-white/5 hover:text-white{% endif %}">
-                <i data-lucide="calendar-check" class="w-5 h-5"></i>
+                <i data-lucide="calendar-check" class="w-5 h-5" aria-hidden="true"></i>
                 Daily Check-In
             </a>
             <a href="{% url 'gratitude' %}"
+               {% if request.resolver_match.url_name == 'gratitude' or request.resolver_match.url_name == 'gratitude_history' %}aria-current="page"{% endif %}
                class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
                       {% if request.resolver_match.url_name == 'gratitude' or request.resolver_match.url_name == 'gratitude_history' %}bg-ps-accent/20 text-ps-accent-hover{% else %}text-gray-300 hover:bg-white/5 hover:text-white{% endif %}">
-                <i data-lucide="sparkles" class="w-5 h-5"></i>
+                <i data-lucide="sparkles" class="w-5 h-5" aria-hidden="true"></i>
                 Gratitude Journal
             </a>
             <a href="{% url 'person_list' %}"
+               {% if request.resolver_match.url_name == 'person_list' or request.resolver_match.url_name == 'person_detail' or request.resolver_match.url_name == 'person_create' or request.resolver_match.url_name == 'person_update' %}aria-current="page"{% endif %}
                class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
                       {% if request.resolver_match.url_name == 'person_list' or request.resolver_match.url_name == 'person_detail' or request.resolver_match.url_name == 'person_create' or request.resolver_match.url_name == 'person_update' %}bg-ps-accent/20 text-ps-accent-hover{% else %}text-gray-300 hover:bg-white/5 hover:text-white{% endif %}">
-                <i data-lucide="handshake" class="w-5 h-5"></i>
+                <i data-lucide="handshake" class="w-5 h-5" aria-hidden="true"></i>
                 Amends List
             </a>
         </nav>
@@ -61,8 +66,8 @@
                     <p class="text-white font-medium">{{ user.first_name|default:user.username }}</p>
                     <p class="text-xs text-ps-muted">{{ user.email }}</p>
                 </div>
-                <a href="{% url 'logout' %}" class="text-ps-muted hover:text-white transition-colors" title="Sign out">
-                    <i data-lucide="log-out" class="w-5 h-5"></i>
+                <a href="{% url 'logout' %}" class="text-ps-muted hover:text-white transition-colors" title="Sign out" aria-label="Sign out">
+                    <i data-lucide="log-out" class="w-5 h-5" aria-hidden="true"></i>
                 </a>
             </div>
         </div>

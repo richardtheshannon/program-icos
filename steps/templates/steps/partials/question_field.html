@@ -2,17 +2,19 @@
 Renders a single question with its form field and HTMX auto-save.
 Expects: item (dict with question, field, field_name)
 {% endcomment %}
-<div class="bg-ps-card border border-ps-border rounded-xl p-5 mb-4" x-data="{ charCount: 0 }">
+<div class="bg-ps-card border border-ps-border rounded-xl p-5 mb-4" x-data="{ charCount: 0 }"
+     role="group" aria-labelledby="label-{{ item.field_name }}">
     <div class="flex items-start gap-3 mb-3">
-        <span class="flex items-center justify-center w-7 h-7 rounded-md bg-gray-700 text-gray-400 text-xs font-bold flex-shrink-0 mt-0.5">
+        <span class="flex items-center justify-center w-7 h-7 rounded-md bg-gray-700 text-gray-400 text-xs font-bold flex-shrink-0 mt-0.5"
+              aria-hidden="true">
             {{ item.question.number }}
         </span>
         <div class="flex-1 min-w-0">
-            <label for="id_{{ item.field_name }}" class="text-sm font-medium text-white leading-relaxed">
+            <label id="label-{{ item.field_name }}" for="id_{{ item.field_name }}" class="text-sm font-medium text-white leading-relaxed">
                 {{ item.question.text }}
             </label>
             {% if item.question.help_text %}
-            <p class="text-xs text-ps-muted mt-1">{{ item.question.help_text }}</p>
+            <p id="help-{{ item.field_name }}" class="text-xs text-ps-muted mt-1">{{ item.question.help_text }}</p>
             {% endif %}
         </div>
     </div>
@@ -24,18 +26,20 @@ Expects: item (dict with question, field, field_name)
             rows="{{ item.field.field.widget.attrs.rows }}"
             placeholder="{{ item.field.field.widget.attrs.placeholder }}"
             class="{{ item.field.field.widget.attrs.class }}"
+            {% if item.question.help_text %}aria-describedby="help-{{ item.field_name }}"{% endif %}
             hx-post="{% url 'auto_save_response' %}"
             hx-trigger="keyup changed delay:2s"
             hx-vals='{"question_id": "{{ item.question.id }}"}'
             hx-target="#save-indicator-{{ item.question.id }}"
             hx-swap="innerHTML"
             hx-include="[name='{{ item.field_name }}']"
-            x-init="charCount = $el.value.length"
-            @input="charCount = $el.value.length"
+            x-init="charCount = $el.value.length; $el.style.height = 'auto'; $el.style.height = $el.scrollHeight + 'px'"
+            @input="charCount = $el.value.length; $el.style.height = 'auto'; $el.style.height = $el.scrollHeight + 'px'"
+            style="overflow: hidden; resize: vertical; min-height: 4rem;"
         >{{ item.field.value|default:"" }}</textarea>
 
         <div class="flex items-center justify-between mt-1.5">
-            <span id="save-indicator-{{ item.question.id }}" class="text-xs"></span>
+            <span id="save-indicator-{{ item.question.id }}" class="text-xs" aria-live="polite"></span>
             <span class="text-xs text-gray-500" x-text="charCount + ' characters'"></span>
         </div>
     </div>

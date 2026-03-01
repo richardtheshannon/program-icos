@@ -286,3 +286,41 @@ class TestSetSobrietyDateView:
         assert response.status_code == 302
         user.refresh_from_db()
         assert user.sobriety_date is None
+
+
+@pytest.mark.django_db
+class TestAccessibility:
+
+    @pytest.fixture
+    def user(self) -> User:
+        return User.objects.create_user(username="a11yuser", password="testpass123")
+
+    def test_skip_to_content_link(self, client: Client, user: User) -> None:
+        client.force_login(user)
+        response = client.get("/dashboard/")
+        assert b"Skip to main content" in response.content
+        assert b'id="main-content"' in response.content
+
+    def test_sidebar_nav_aria_label(self, client: Client, user: User) -> None:
+        client.force_login(user)
+        response = client.get("/dashboard/")
+        assert b'aria-label="Main navigation"' in response.content
+
+    def test_sidebar_active_aria_current(self, client: Client, user: User) -> None:
+        client.force_login(user)
+        response = client.get("/dashboard/")
+        assert b'aria-current="page"' in response.content
+
+    def test_mobile_menu_aria_label(self, client: Client, user: User) -> None:
+        client.force_login(user)
+        response = client.get("/dashboard/")
+        assert b'aria-label="Toggle navigation menu"' in response.content
+
+    def test_step_detail_breadcrumb(self, client: Client, user: User) -> None:
+        call_command("seed_steps", stdout=StringIO())
+        client.force_login(user)
+        response = client.get("/steps/1/")
+        content = response.content.decode()
+        assert 'aria-label="Breadcrumb"' in content
+        assert "Step Work" in content
+        assert 'aria-current="page"' in content
