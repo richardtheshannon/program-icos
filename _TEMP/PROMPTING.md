@@ -11,12 +11,14 @@
 
 <X
 ```
+Email: admin@powerfulsilence.com
+Password: devpassword123
 
 > Ask me any questions you may have so we can develop this correctly and efficiently. Strictly ask me one question at a time so we can create this as a markdown file. Break it up into bite sized development phases. Create it in the \_TEMP directory as \_\_\_.md
 
 CURRENT DIRECTORY: cd /home/highlineadventur/public\_html/`[PATH]`
 
-`Update _TEMP/CLAUDE.md for project status and context regarding our developments. Revise the markdown file to include only essential development specifications, information, and development guidelines. Keep the file under 1000 lines.`
+` Update _TEMP/CLAUDE.md for project status and context regarding our developments. Revise the markdown file to include only essential development specifications, information, and development guidelines. Keep the file under 1000 lines. `
 
 ## LOCAL DEV [​](#local-dev)
 
@@ -90,14 +92,19 @@ I would like to add a new page and navigation link for a sub-navigation under "S
 
 ## DB/API/DEV-SPECS [​](#db-api-dev-specs)
 
-*   \[FTP\]
+*   12steps.powerfulsilence.com
 
-*   FTP Username: \_\_\_
-*   FTP Password: \_\_\_
-*   FPT Path: \_\_\_
-*   FTP server: \_\_\_
-*   FTPS port: 21
-*   Explicit path (This has already been set in the credentials the path is already fixed, simply deploy to /): \_\_\_
+FTP Username: 12steps@powerfulsilence.com
+FTP Password: Superculture1@
+FTP server: ftp.powerfulsilence.com
+FTP & explicit FTPS port:  21
+FTP server: /home/powerfulsilence/public_html/12steps.powerfulsilence.com
+FTPS port: 21
+Explicit path (This has already been set in the credentials the path is already fixed, simply deploy to /)
+
+User: 12steps-user
+Database: 12setps
+Password: Superculture1@
 
 *   \[API\]
 

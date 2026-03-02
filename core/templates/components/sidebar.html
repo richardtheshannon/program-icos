@@ -66,9 +66,12 @@
                     <p class="text-white font-medium">{{ user.first_name|default:user.username }}</p>
                     <p class="text-xs text-ps-muted">{{ user.email }}</p>
                 </div>
-                <a href="{% url 'logout' %}" class="text-ps-muted hover:text-white transition-colors" title="Sign out" aria-label="Sign out">
-                    <i data-lucide="log-out" class="w-5 h-5" aria-hidden="true"></i>
-                </a>
+                <form method="post" action="{% url 'logout' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="text-ps-muted hover:text-white transition-colors" title="Sign out" aria-label="Sign out">
+                        <i data-lucide="log-out" class="w-5 h-5" aria-hidden="true"></i>
+                    </button>
+                </form>
             </div>
         </div>
     </div>
