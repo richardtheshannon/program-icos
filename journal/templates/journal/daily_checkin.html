@@ -1,185 +1,108 @@
 {% extends "base.html" %}
 
-{% block title %}Daily Check-In — Powerful Silence{% endblock %}
-
-{% block page_title %}Daily Check-In{% endblock %}
+{% block title %}Daily check-in — PS01{% endblock %}
 
 {% block content %}
-<div class="max-w-2xl mx-auto" x-data="{
-    wasResentful: {{ form.instance.was_resentful|yesno:'true,false,false' }},
-    wasSelfish: {{ form.instance.was_selfish|yesno:'true,false,false' }},
-    wasDishonest: {{ form.instance.was_dishonest|yesno:'true,false,false' }},
-    serenity: {{ form.instance.serenity_level|default:'5' }},
-    mood: {{ form.instance.mood|default:'5' }}
-}">
+{% if is_today %}
+    {% include 'partials/page_hero.html' with eyebrow='TODAY · DAILY CHECK-IN' title='Daily check-in' subtitle=checkin_date|date:"l, F j, Y" meta=meta_html only %}
+{% else %}
+    {% include 'partials/page_hero.html' with eyebrow='JOURNAL · DAILY CHECK-IN' title=checkin_date|date:"l, F j" subtitle=checkin_date|date:"F j, Y" meta=meta_html only %}
+{% endif %}
 
-    <!-- Header -->
-    <div class="flex items-center justify-between mb-6">
-        <div>
-            <h2 class="text-xl font-bold text-white">
-                {% if is_today %}Today's Inventory{% else %}{{ checkin_date|date:"l, F j, Y" }}{% endif %}
-            </h2>
-            <p class="text-sm text-ps-muted">{{ checkin_date|date:"l, F j, Y" }}</p>
+{% if inventory %}
+<div class="bone-card" style="margin-bottom: var(--pad-3);">
+    <p class="mono" style="color: var(--ok); margin: 0;">✓ Saved {{ inventory.updated_at|timesince }} ago</p>
+</div>
+{% endif %}
+
+<form method="post">
+    {% csrf_token %}
+
+    <div class="bone-card" style="margin-bottom: var(--pad-3);">
+        <div class="card-head">
+            <h3>Step 10 · Personal inventory</h3>
         </div>
-        {% if streak > 0 %}
-        <div class="flex items-center gap-2 px-3 py-2 bg-amber-500/10 border border-amber-500/30 rounded-lg">
-            <i data-lucide="flame" class="w-5 h-5 text-amber-400"></i>
-            <span class="text-amber-400 font-bold">{{ streak }}</span>
-            <span class="text-sm text-amber-400/80">day{{ streak|pluralize }} streak</span>
+        <div class="card-body">
+            <div class="field">
+                <label for="id_serenity_level" class="field-label">Serenity level <span class="mono num" style="color: var(--accent);">{{ form.serenity_level.value|default:5 }}</span> / 10</label>
+                <input type="range" name="serenity_level" id="id_serenity_level" min="1" max="10" step="1" value="{{ form.serenity_level.value|default:5 }}" class="field-input" style="padding: 0;">
+                <div style="display: flex; justify-content: space-between; font-size: var(--t-xs); color: var(--ink-3);" class="mono">
+                    <span>RESTLESS</span><span>SERENE</span>
+                </div>
+            </div>
+
+            <div class="field">
+                <label class="field-label" style="display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" name="was_resentful" {% if form.was_resentful.value %}checked{% endif %} style="width: 18px; height: 18px;">
+                    <span>I was resentful today</span>
+                </label>
+                {{ form.resentful_details }}
+            </div>
+
+            <div class="field">
+                <label class="field-label" style="display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" name="was_selfish" {% if form.was_selfish.value %}checked{% endif %} style="width: 18px; height: 18px;">
+                    <span>I was selfish or self-seeking today</span>
+                </label>
+                {{ form.selfish_details }}
+            </div>
+
+            <div class="field">
+                <label class="field-label" style="display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" name="was_dishonest" {% if form.was_dishonest.value %}checked{% endif %} style="width: 18px; height: 18px;">
+                    <span>I was dishonest today</span>
+                </label>
+                {{ form.dishonest_details }}
+            </div>
         </div>
-        {% endif %}
     </div>
 
-    {% if inventory %}
-    <div class="mb-4 px-4 py-2 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
-        <p class="text-sm text-emerald-400">
-            <i data-lucide="check-circle" class="w-4 h-4 inline"></i>
-            Saved {{ inventory.updated_at|timesince }} ago
-        </p>
+    <div class="bone-card" style="margin-bottom: var(--pad-3);">
+        <div class="card-head">
+            <h3>Step 11 · Prayer &amp; meditation</h3>
+        </div>
+        <div class="card-body">
+            <div class="field">
+                <label class="field-label" style="display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" name="did_pray" {% if form.did_pray.value %}checked{% endif %} style="width: 18px; height: 18px;">
+                    <span>I prayed today</span>
+                </label>
+            </div>
+            <div class="field">
+                <label class="field-label" style="display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" name="did_meditate" {% if form.did_meditate.value %}checked{% endif %} style="width: 18px; height: 18px;">
+                    <span>I meditated today</span>
+                </label>
+            </div>
+            <div class="field">
+                <label for="id_spiritual_notes" class="field-label">Spiritual notes</label>
+                {{ form.spiritual_notes }}
+            </div>
+        </div>
     </div>
-    {% endif %}
 
-    <form method="post">
-        {% csrf_token %}
-
-        <!-- Step 10: Personal Inventory -->
-        <div class="bg-ps-card border border-ps-border rounded-xl p-6 mb-6">
-            <div class="flex items-center gap-3 mb-5">
-                <div class="p-2 bg-emerald-500/20 rounded-lg">
-                    <i data-lucide="search" class="w-5 h-5 text-emerald-400"></i>
-                </div>
-                <h3 class="text-lg font-semibold text-white">Step 10 — Personal Inventory</h3>
-            </div>
-
-            <!-- Serenity level -->
-            <div class="mb-6">
-                <label class="block text-sm font-medium text-gray-300 mb-2">
-                    Serenity Level: <span class="text-ps-accent font-bold" x-text="serenity"></span>/10
-                </label>
-                <input type="range" name="serenity_level" min="1" max="10" step="1"
-                       x-model="serenity"
-                       value="{{ form.instance.serenity_level|default:'5' }}"
-                       class="w-full accent-ps-accent">
-                <div class="flex justify-between text-xs text-ps-muted mt-1">
-                    <span>Restless</span>
-                    <span>Serene</span>
-                </div>
-            </div>
-
-            <!-- Was Resentful -->
-            <div class="mb-4">
-                <label class="flex items-center gap-3 cursor-pointer">
-                    <input type="checkbox" name="was_resentful"
-                           x-model="wasResentful"
-                           {% if form.instance.was_resentful %}checked{% endif %}
-                           class="w-5 h-5 rounded bg-ps-bg border-ps-border text-ps-accent focus:ring-ps-accent">
-                    <span class="text-sm text-gray-300">I was resentful today</span>
-                </label>
-                <div x-show="wasResentful" x-transition class="mt-3 ml-8" style="display: none;">
-                    {{ form.resentful_details }}
-                </div>
-            </div>
-
-            <!-- Was Selfish -->
-            <div class="mb-4">
-                <label class="flex items-center gap-3 cursor-pointer">
-                    <input type="checkbox" name="was_selfish"
-                           x-model="wasSelfish"
-                           {% if form.instance.was_selfish %}checked{% endif %}
-                           class="w-5 h-5 rounded bg-ps-bg border-ps-border text-ps-accent focus:ring-ps-accent">
-                    <span class="text-sm text-gray-300">I was selfish or self-seeking today</span>
-                </label>
-                <div x-show="wasSelfish" x-transition class="mt-3 ml-8" style="display: none;">
-                    {{ form.selfish_details }}
-                </div>
-            </div>
-
-            <!-- Was Dishonest -->
-            <div class="mb-4">
-                <label class="flex items-center gap-3 cursor-pointer">
-                    <input type="checkbox" name="was_dishonest"
-                           x-model="wasDishonest"
-                           {% if form.instance.was_dishonest %}checked{% endif %}
-                           class="w-5 h-5 rounded bg-ps-bg border-ps-border text-ps-accent focus:ring-ps-accent">
-                    <span class="text-sm text-gray-300">I was dishonest today</span>
-                </label>
-                <div x-show="wasDishonest" x-transition class="mt-3 ml-8" style="display: none;">
-                    {{ form.dishonest_details }}
-                </div>
-            </div>
+    <div class="bone-card" style="margin-bottom: var(--pad-3);">
+        <div class="card-head">
+            <h3>Mood &amp; reflection</h3>
         </div>
-
-        <!-- Step 11: Prayer & Meditation -->
-        <div class="bg-ps-card border border-ps-border rounded-xl p-6 mb-6">
-            <div class="flex items-center gap-3 mb-5">
-                <div class="p-2 bg-violet-500/20 rounded-lg">
-                    <i data-lucide="sun" class="w-5 h-5 text-violet-400"></i>
-                </div>
-                <h3 class="text-lg font-semibold text-white">Step 11 — Prayer & Meditation</h3>
-            </div>
-
-            <div class="space-y-4">
-                <label class="flex items-center gap-3 cursor-pointer">
-                    <input type="checkbox" name="did_pray"
-                           {% if form.instance.did_pray %}checked{% endif %}
-                           class="w-5 h-5 rounded bg-ps-bg border-ps-border text-ps-accent focus:ring-ps-accent">
-                    <span class="text-sm text-gray-300">I prayed today</span>
-                </label>
-
-                <label class="flex items-center gap-3 cursor-pointer">
-                    <input type="checkbox" name="did_meditate"
-                           {% if form.instance.did_meditate %}checked{% endif %}
-                           class="w-5 h-5 rounded bg-ps-bg border-ps-border text-ps-accent focus:ring-ps-accent">
-                    <span class="text-sm text-gray-300">I meditated today</span>
-                </label>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-2">Spiritual Notes</label>
-                    {{ form.spiritual_notes }}
+        <div class="card-body">
+            <div class="field">
+                <label for="id_mood" class="field-label">Mood <span class="mono num" style="color: var(--accent);">{{ form.mood.value|default:5 }}</span> / 10</label>
+                <input type="range" name="mood" id="id_mood" min="1" max="10" step="1" value="{{ form.mood.value|default:5 }}" class="field-input" style="padding: 0;">
+                <div style="display: flex; justify-content: space-between; font-size: var(--t-xs); color: var(--ink-3);" class="mono">
+                    <span>LOW</span><span>GREAT</span>
                 </div>
             </div>
-        </div>
-
-        <!-- Mood & Notes -->
-        <div class="bg-ps-card border border-ps-border rounded-xl p-6 mb-6">
-            <div class="flex items-center gap-3 mb-5">
-                <div class="p-2 bg-amber-500/20 rounded-lg">
-                    <i data-lucide="smile" class="w-5 h-5 text-amber-400"></i>
-                </div>
-                <h3 class="text-lg font-semibold text-white">Mood & Reflection</h3>
-            </div>
-
-            <div class="mb-6">
-                <label class="block text-sm font-medium text-gray-300 mb-2">
-                    Mood: <span class="text-ps-accent font-bold" x-text="mood"></span>/10
-                </label>
-                <input type="range" name="mood" min="1" max="10" step="1"
-                       x-model="mood"
-                       value="{{ form.instance.mood|default:'5' }}"
-                       class="w-full accent-ps-accent">
-                <div class="flex justify-between text-xs text-ps-muted mt-1">
-                    <span>Low</span>
-                    <span>Great</span>
-                </div>
-            </div>
-
-            <div>
-                <label class="block text-sm font-medium text-gray-300 mb-2">Additional Notes</label>
+            <div class="field">
+                <label for="id_additional_notes" class="field-label">Additional notes</label>
                 {{ form.additional_notes }}
             </div>
         </div>
+    </div>
 
-        <!-- Actions -->
-        <div class="flex items-center justify-between">
-            <a href="{% url 'journal_history' %}" class="text-sm text-ps-muted hover:text-white transition-colors">
-                <i data-lucide="history" class="w-4 h-4 inline"></i>
-                View History
-            </a>
-            <button type="submit"
-                    class="px-6 py-2.5 bg-ps-accent hover:bg-ps-accent-hover text-white font-medium rounded-lg transition-colors">
-                Save Check-In
-            </button>
-        </div>
-    </form>
-</div>
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: var(--pad-2); flex-wrap: wrap;">
+        <a href="{% url 'journal_history' %}" class="btn btn-ghost btn-sm">View history</a>
+        <button type="submit" class="btn btn-primary">Save &amp; continue</button>
+    </div>
+</form>
 {% endblock %}

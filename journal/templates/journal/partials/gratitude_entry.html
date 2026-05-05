@@ -1,14 +1,14 @@
-<!-- Single gratitude entry row -->
-<li class="flex items-center justify-between gap-3 px-3 py-2.5 bg-ps-bg/50 border border-ps-border/50 rounded-lg group">
-    <div class="flex items-center gap-3 min-w-0">
-        <span class="text-pink-400 text-sm font-bold flex-shrink-0">{{ forloop.counter }}.</span>
-        <span class="text-gray-300 text-sm truncate">{{ entry.entry }}</span>
-    </div>
-    <button hx-delete="{% url 'gratitude_delete' entry.pk %}"
+<li style="display: flex; align-items: flex-start; justify-content: space-between; gap: var(--pad-2); padding: 8px 0; border-top: 1px solid var(--line-soft);{% if forloop.first %} border-top: 0;{% endif %}">
+    <span style="display: flex; align-items: flex-start; gap: 10px; min-width: 0;">
+        <span class="mono num" style="color: var(--accent); flex-shrink: 0;">{{ forloop.counter }}.</span>
+        <span style="font-size: var(--t-sm);">{{ entry.entry }}</span>
+    </span>
+    <button type="button"
+            hx-delete="{% url 'gratitude_delete' entry.pk %}"
             hx-target="#gratitude-list"
             hx-swap="innerHTML"
             hx-confirm="Remove this entry?"
-            class="text-ps-muted hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100 flex-shrink-0">
-        <i data-lucide="x" class="w-4 h-4"></i>
-    </button>
+            class="btn-sm btn-ghost mono"
+            style="background: transparent; border: 0; color: var(--ink-3); cursor: pointer; padding: 2px 8px; font-size: var(--t-xs); flex-shrink: 0;"
+            aria-label="Remove gratitude entry">×</button>
 </li>

@@ -1,38 +1,19 @@
-<!-- Today's Check-In Widget -->
-<div class="bg-ps-card border border-ps-border rounded-xl p-6">
-    <div class="flex items-center gap-3 mb-4">
-        <div class="p-2 bg-amber-500/20 rounded-lg">
-            <i data-lucide="calendar-check" class="w-5 h-5 text-amber-400"></i>
-        </div>
-        <h3 class="text-lg font-semibold text-white">Today's Check-In</h3>
-    </div>
-
-    {% if todays_checkin %}
-        <div class="flex items-center gap-2 mb-3">
-            <i data-lucide="check-circle" class="w-5 h-5 text-emerald-400"></i>
-            <span class="text-emerald-400 font-medium">Complete</span>
-        </div>
-        <div class="flex items-center gap-4 text-sm text-ps-muted mb-3">
-            <span>Serenity: {{ todays_checkin.serenity_level }}/10</span>
-            <span>Mood: {{ todays_checkin.mood }}/10</span>
-        </div>
-    {% else %}
-        <div class="flex items-center gap-2 mb-3">
-            <i data-lucide="circle" class="w-5 h-5 text-ps-muted"></i>
-            <span class="text-ps-muted">Not yet completed</span>
-        </div>
-    {% endif %}
-
+<div class="card-head">
+    <h3>Today's check-in</h3>
     {% if checkin_streak > 0 %}
-    <div class="flex items-center gap-2 mb-3">
-        <i data-lucide="flame" class="w-4 h-4 text-amber-400"></i>
-        <span class="text-sm text-amber-400">{{ checkin_streak }} day{{ checkin_streak|pluralize }} streak</span>
-    </div>
+        <span class="meta mono"><span class="num">{{ checkin_streak }}</span> DAY STREAK</span>
     {% endif %}
-
-    <a href="{% url 'daily_checkin' %}"
-       class="inline-flex items-center gap-2 px-4 py-2 bg-ps-accent hover:bg-ps-accent-hover text-white text-sm font-medium rounded-lg transition-colors">
-        <i data-lucide="{% if todays_checkin %}edit{% else %}plus{% endif %}" class="w-4 h-4"></i>
-        {% if todays_checkin %}Review Check-In{% else %}Start Check-In{% endif %}
-    </a>
+</div>
+<div class="card-body">
+    {% if todays_checkin %}
+        <p class="mono" style="color: var(--ok);">✓ Complete</p>
+        <p class="mono" style="color: var(--ink-3); font-size: var(--t-sm);">
+            Serenity <span class="num">{{ todays_checkin.serenity_level }}</span>/10 ·
+            Mood <span class="num">{{ todays_checkin.mood }}</span>/10
+        </p>
+        <a href="{% url 'daily_checkin' %}" class="btn btn-ghost btn-sm">Review check-in</a>
+    {% else %}
+        <p class="mono" style="color: var(--ink-3);">Not yet completed.</p>
+        <a href="{% url 'daily_checkin' %}" class="btn btn-primary btn-sm">Start check-in</a>
+    {% endif %}
 </div>

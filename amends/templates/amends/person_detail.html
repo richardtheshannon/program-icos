@@ -1,138 +1,75 @@
 {% extends "base.html" %}
 
-{% block title %}{{ person.name }} — Amends — Powerful Silence{% endblock %}
-
-{% block page_title %}{{ person.name }}{% endblock %}
+{% block title %}{{ person.name }} · Amends — PS01{% endblock %}
 
 {% block content %}
-<div class="max-w-2xl mx-auto">
+{% include 'partials/page_hero.html' with eyebrow='AMENDS · PERSON' title=person.name subtitle=person.relationship|default:'Amends record' meta=meta_html only %}
 
-    <!-- Back + actions -->
-    <div class="flex items-center justify-between mb-6">
-        <a href="{% url 'person_list' %}" class="text-sm text-ps-muted hover:text-white transition-colors">
-            <i data-lucide="arrow-left" class="w-4 h-4 inline"></i>
-            Amends List
-        </a>
-        <div class="flex items-center gap-2">
-            <a href="{% url 'person_update' person.pk %}"
-               class="px-3 py-1.5 bg-ps-card border border-ps-border text-gray-300 text-sm rounded-lg hover:text-white transition-colors">
-                <i data-lucide="edit-2" class="w-3.5 h-3.5 inline"></i> Edit
-            </a>
-            <a href="{% url 'person_delete' person.pk %}"
-               class="px-3 py-1.5 bg-ps-card border border-red-500/30 text-red-400 text-sm rounded-lg hover:bg-red-500/10 transition-colors">
-                <i data-lucide="trash-2" class="w-3.5 h-3.5 inline"></i> Remove
-            </a>
-        </div>
+<div class="bone-card" style="margin-bottom: var(--pad-3);">
+    <div class="card-head">
+        <h3>Step 8 · How I harmed them</h3>
+        <span class="meta" style="display: inline-flex; gap: 8px;">
+            <a href="{% url 'person_update' person.pk %}" class="btn btn-ghost btn-sm">Edit</a>
+            <a href="{% url 'person_delete' person.pk %}" class="btn btn-ghost btn-sm" style="color: var(--bad);">Remove</a>
+        </span>
     </div>
-
-    <!-- Step 8 — How Harmed -->
-    <div class="bg-ps-card border border-ps-border rounded-xl p-6 mb-6">
-        <div class="flex items-center gap-3 mb-4">
-            <div class="p-2 bg-amber-500/20 rounded-lg">
-                <i data-lucide="file-text" class="w-5 h-5 text-amber-400"></i>
-            </div>
-            <h3 class="text-lg font-semibold text-white">Step 8 — How I Harmed Them</h3>
-        </div>
+    <div class="card-body">
         {% if person.relationship %}
-        <p class="text-sm text-ps-muted mb-2">Relationship: <span class="text-gray-300">{{ person.relationship }}</span></p>
+            <p class="mono" style="font-size: var(--t-sm); color: var(--ink-3);">RELATIONSHIP · <span style="color: var(--ink);">{{ person.relationship }}</span></p>
         {% endif %}
-        <p class="text-sm text-ps-muted mb-1">Willingness: <span class="text-gray-300">{{ person.get_willingness_level_display }}</span></p>
-        <div class="mt-3 p-3 bg-ps-bg/50 border border-ps-border/50 rounded-lg">
-            <p class="text-gray-300 text-sm whitespace-pre-line">{{ person.how_harmed }}</p>
+        <p class="mono" style="font-size: var(--t-sm); color: var(--ink-3);">WILLINGNESS · <span style="color: var(--ink);">{{ person.get_willingness_level_display }}</span></p>
+        <div style="margin-top: var(--pad-2); padding: var(--pad-2); background: var(--bg-elev); border: 1px solid var(--line-soft); border-radius: var(--radius-sm);">
+            <p style="margin: 0; white-space: pre-line;">{{ person.how_harmed }}</p>
         </div>
     </div>
+</div>
 
-    <!-- Step 9 — Amend Progress -->
-    <div class="bg-ps-card border border-ps-border rounded-xl p-6 mb-6">
-        <div class="flex items-center gap-3 mb-4">
-            <div class="p-2 bg-emerald-500/20 rounded-lg">
-                <i data-lucide="handshake" class="w-5 h-5 text-emerald-400"></i>
-            </div>
-            <h3 class="text-lg font-semibold text-white">Step 9 — Making Amends</h3>
-        </div>
-
-        <!-- Status progression visual -->
-        <div class="flex items-center gap-1 mb-6 overflow-x-auto">
-            {% for value, label in status_choices %}
-            <div class="flex items-center gap-1">
-                {% if amend and amend.status == value %}
-                <span class="px-2.5 py-1 text-xs font-medium rounded-full bg-ps-accent text-white">{{ label }}</span>
-                {% elif amend and forloop.counter0 < status_choices|length %}
-                    {% with current_idx=amend.status %}
-                    <span class="px-2.5 py-1 text-xs font-medium rounded-full
-                        {% if value == 'not_started' and current_idx != 'not_started' %}bg-emerald-500/20 text-emerald-400
-                        {% elif value == 'letter_drafted' and current_idx != 'not_started' and current_idx != 'letter_drafted' %}bg-emerald-500/20 text-emerald-400
-                        {% elif value == 'discussed' and current_idx == 'amend_made' or current_idx == 'ongoing' %}bg-emerald-500/20 text-emerald-400
-                        {% elif value == 'amend_made' and current_idx == 'ongoing' %}bg-emerald-500/20 text-emerald-400
-                        {% else %}bg-gray-500/20 text-gray-500
-                        {% endif %}">{{ label }}</span>
-                    {% endwith %}
-                {% else %}
-                <span class="px-2.5 py-1 text-xs font-medium rounded-full bg-gray-500/20 text-gray-500">{{ label }}</span>
-                {% endif %}
-                {% if not forloop.last %}
-                <i data-lucide="chevron-right" class="w-3 h-3 text-ps-muted flex-shrink-0"></i>
-                {% endif %}
-            </div>
-            {% endfor %}
-        </div>
-
-        <form method="post" action="{% url 'amend_create' person.pk %}" class="space-y-6">
+<div class="bone-card" style="margin-bottom: var(--pad-3);">
+    <div class="card-head">
+        <h3>Step 9 · Making amends</h3>
+        {% include "amends/partials/amend_status.html" with status=amend.status|default:'not_started' %}
+    </div>
+    <div class="card-body">
+        <form method="post" action="{% url 'amend_create' person.pk %}">
             {% csrf_token %}
-
-            <!-- Status -->
-            <div>
-                <label class="block text-sm font-medium text-gray-300 mb-2">Current Status</label>
+            <div class="field">
+                <label for="id_status" class="field-label">Current status</label>
                 {{ amend_form.status }}
             </div>
-
-            <!-- Anger Letter -->
-            <div>
-                <label class="block text-sm font-medium text-gray-300 mb-2">
-                    Anger Letter
-                    <span class="text-red-400 font-normal">(Private — DO NOT SEND)</span>
+            <div class="field">
+                <label for="id_anger_letter" class="field-label">
+                    Anger letter <span class="mono" style="color: var(--bad); text-transform: uppercase; font-size: var(--t-xs); letter-spacing: 0.06em;">PRIVATE · DO NOT SEND</span>
                 </label>
-                <div class="mb-2 px-3 py-2 bg-red-500/10 border border-red-500/30 rounded-lg">
-                    <p class="text-xs text-red-400">
-                        <i data-lucide="alert-triangle" class="w-3.5 h-3.5 inline"></i>
-                        This letter is for YOUR healing only. Write your honest, uncensored feelings. Never send this.
-                    </p>
-                </div>
+                <p class="field-help" style="background: var(--bad-soft); border: 1px solid var(--bad); padding: 8px 10px; border-radius: var(--radius-sm); color: var(--bad); font-size: var(--t-xs); margin-bottom: 6px;">
+                    For your healing only. Write your honest, uncensored feelings. Never send.
+                </p>
                 {{ amend_form.anger_letter }}
             </div>
-
-            <!-- Apology Letter -->
-            <div>
-                <label class="block text-sm font-medium text-gray-300 mb-2">Apology / Amends Letter</label>
+            <div class="field">
+                <label for="id_apology_letter" class="field-label">Apology / amends letter</label>
                 {{ amend_form.apology_letter }}
             </div>
-
-            <!-- Actionable Amends -->
-            <div>
-                <label class="block text-sm font-medium text-gray-300 mb-2">Actionable Amends</label>
-                <p class="text-xs text-ps-muted mb-2">What concrete actions can you take to make things right?</p>
+            <div class="field">
+                <label for="id_actionable_amends" class="field-label">Actionable amends</label>
+                <p class="field-help mono" style="font-size: var(--t-xs); color: var(--ink-3); margin-bottom: 6px;">What concrete actions can you take to make things right?</p>
                 {{ amend_form.actionable_amends }}
             </div>
-
-            <!-- Sponsor Feedback -->
-            <div>
-                <label class="block text-sm font-medium text-gray-300 mb-2">Sponsor Feedback</label>
+            <div class="field">
+                <label for="id_sponsor_feedback" class="field-label">Sponsor feedback</label>
                 {{ amend_form.sponsor_feedback }}
             </div>
-
-            <!-- Post-Amend Reflection -->
-            <div>
-                <label class="block text-sm font-medium text-gray-300 mb-2">Post-Amend Reflection</label>
+            <div class="field">
+                <label for="id_post_amend_reflection" class="field-label">Post-amend reflection</label>
                 {{ amend_form.post_amend_reflection }}
             </div>
-
-            <div class="flex justify-end">
-                <button type="submit"
-                        class="px-6 py-2.5 bg-ps-accent hover:bg-ps-accent-hover text-white font-medium rounded-lg transition-colors">
-                    Save Progress
-                </button>
+            <div style="display: flex; justify-content: flex-end; margin-top: var(--pad-3); padding-top: var(--pad-3); border-top: 1px solid var(--line-soft);">
+                <button type="submit" class="btn btn-primary">Save progress</button>
             </div>
         </form>
     </div>
 </div>
+
+<nav style="display: flex; justify-content: flex-start; gap: var(--pad-2); margin-top: var(--pad-3);">
+    <a href="{% url 'person_list' %}" class="btn btn-ghost btn-sm">← Amends list</a>
+</nav>
 {% endblock %}

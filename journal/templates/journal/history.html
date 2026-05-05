@@ -1,85 +1,53 @@
 {% extends "base.html" %}
 
-{% block title %}Journal History — Powerful Silence{% endblock %}
-
-{% block page_title %}Journal History{% endblock %}
+{% block title %}Journal history — PS01{% endblock %}
 
 {% block content %}
-<div class="max-w-2xl mx-auto">
+{% include 'partials/page_hero.html' with eyebrow='JOURNAL · HISTORY' title='All check-ins' meta=meta_html only %}
 
-    <div class="flex items-center justify-between mb-6">
-        <h2 class="text-xl font-bold text-white">Past Check-Ins</h2>
-        <div class="flex items-center gap-2">
-            <a href="{% url 'journal_export' %}"
-               class="no-print inline-flex items-center gap-2 px-4 py-2 bg-gray-700/50 hover:bg-gray-700 text-sm text-ps-muted hover:text-white rounded-lg transition-colors">
-                <i data-lucide="download" class="w-4 h-4"></i>
-                Export PDF
-            </a>
-            <a href="{% url 'daily_checkin' %}"
-               class="inline-flex items-center gap-2 px-4 py-2 bg-ps-accent hover:bg-ps-accent-hover text-white text-sm font-medium rounded-lg transition-colors">
-                <i data-lucide="plus" class="w-4 h-4"></i>
-                Today's Check-In
-            </a>
-        </div>
-    </div>
-
-    {% if entries %}
-    <div class="space-y-3">
-        {% for entry in entries %}
-        <a href="{% url 'daily_checkin_date' entry.date|date:'Y-m-d' %}"
-           class="block bg-ps-card border border-ps-border rounded-xl p-4 hover:border-ps-accent/50 transition-colors">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-white font-medium">{{ entry.date|date:"l, F j, Y" }}</p>
-                    <div class="flex items-center gap-4 mt-1 text-sm text-ps-muted">
-                        <span>Serenity: {{ entry.serenity_level }}/10</span>
-                        <span>Mood: {{ entry.mood }}/10</span>
-                        {% if entry.did_pray %}
-                        <span class="text-violet-400">Prayed</span>
-                        {% endif %}
-                        {% if entry.did_meditate %}
-                        <span class="text-violet-400">Meditated</span>
-                        {% endif %}
-                    </div>
-                </div>
-                <i data-lucide="chevron-right" class="w-5 h-5 text-ps-muted"></i>
-            </div>
-        </a>
-        {% endfor %}
-    </div>
-
-    <!-- Pagination -->
-    {% if is_paginated %}
-    <div class="flex items-center justify-center gap-4 mt-8">
-        {% if page_obj.has_previous %}
-        <a href="?page={{ page_obj.previous_page_number }}"
-           class="px-4 py-2 bg-ps-card border border-ps-border rounded-lg text-sm text-gray-300 hover:text-white transition-colors">
-            Previous
-        </a>
-        {% endif %}
-        <span class="text-sm text-ps-muted">
-            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+<div class="bone-card" style="margin-bottom: var(--pad-3);">
+    <div class="card-head">
+        <h3>Past check-ins</h3>
+        <span class="meta" style="display: inline-flex; gap: 8px;">
+            <a href="{% url 'journal_export' %}" class="btn btn-ghost btn-sm">Export PDF</a>
+            <a href="{% url 'daily_checkin' %}" class="btn btn-primary btn-sm">Today's check-in</a>
         </span>
-        {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}"
-           class="px-4 py-2 bg-ps-card border border-ps-border rounded-lg text-sm text-gray-300 hover:text-white transition-colors">
-            Next
-        </a>
+    </div>
+    <div class="card-body">
+        {% if entries %}
+            <ul style="list-style: none; margin: 0; padding: 0;">
+                {% for entry in entries %}
+                    <li style="padding: var(--pad-2) 0; border-top: 1px solid var(--line-soft);{% if forloop.first %} border-top: 0; padding-top: 0;{% endif %}">
+                        <a href="{% url 'daily_checkin_date' entry.date|date:'Y-m-d' %}" style="display: flex; justify-content: space-between; align-items: center; gap: var(--pad-2); text-decoration: none; color: var(--ink);">
+                            <div>
+                                <p class="mono" style="margin: 0; text-transform: uppercase; letter-spacing: 0.06em; font-size: var(--t-sm);">{{ entry.date|date:"l, F j, Y" }}</p>
+                                <p class="mono" style="margin: 4px 0 0; font-size: var(--t-xs); color: var(--ink-3);">
+                                    Serenity <span class="num">{{ entry.serenity_level }}</span>/10 ·
+                                    Mood <span class="num">{{ entry.mood }}</span>/10
+                                    {% if entry.did_pray %} · Prayed{% endif %}
+                                    {% if entry.did_meditate %} · Meditated{% endif %}
+                                </p>
+                            </div>
+                            <span class="mono" style="color: var(--ink-3); font-size: var(--t-sm);">→</span>
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+            {% if is_paginated %}
+                <nav style="display: flex; justify-content: center; gap: var(--pad-2); margin-top: var(--pad-3); padding-top: var(--pad-2); border-top: 1px solid var(--line-soft);">
+                    {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-ghost btn-sm">← Previous</a>
+                    {% endif %}
+                    <span class="mono" style="font-size: var(--t-xs); color: var(--ink-3); align-self: center;">Page <span class="num">{{ page_obj.number }}</span> of <span class="num">{{ page_obj.paginator.num_pages }}</span></span>
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}" class="btn btn-ghost btn-sm">Next →</a>
+                    {% endif %}
+                </nav>
+            {% endif %}
+        {% else %}
+            <p class="mono" style="color: var(--ink-3);">No check-ins yet. Start your daily inventory practice today.</p>
+            <a href="{% url 'daily_checkin' %}" class="btn btn-primary btn-sm">Begin today's check-in</a>
         {% endif %}
     </div>
-    {% endif %}
-
-    {% else %}
-    <div class="bg-ps-card border border-ps-border rounded-xl p-8 text-center">
-        <i data-lucide="calendar" class="w-12 h-12 text-ps-muted mx-auto mb-3"></i>
-        <p class="text-gray-300 mb-2">No check-ins yet.</p>
-        <p class="text-sm text-ps-muted mb-4">Start your daily inventory practice today.</p>
-        <a href="{% url 'daily_checkin' %}"
-           class="inline-flex items-center gap-2 px-4 py-2 bg-ps-accent hover:bg-ps-accent-hover text-white text-sm font-medium rounded-lg transition-colors">
-            <i data-lucide="plus" class="w-4 h-4"></i>
-            Begin Today's Check-In
-        </a>
-    </div>
-    {% endif %}
 </div>
 {% endblock %}

@@ -1,10 +1,8 @@
-<!-- Streak Widget Partial (HTMX-loadable) -->
 {% if streak > 0 %}
-<div class="flex items-center gap-2">
-    <i data-lucide="flame" class="w-5 h-5 text-amber-400"></i>
-    <span class="text-amber-400 font-bold text-lg">{{ streak }}</span>
-    <span class="text-sm text-amber-400/80">day{{ streak|pluralize }} streak</span>
-</div>
+    <span class="mono" style="display: inline-flex; align-items: baseline; gap: 6px; color: var(--accent);">
+        <span class="num" style="font-size: var(--t-2xl); font-weight: 600;">{{ streak }}</span>
+        <span style="font-size: var(--t-xs); text-transform: uppercase; letter-spacing: 0.08em;">DAY{{ streak|pluralize }} STREAK</span>
+    </span>
 {% else %}
-<p class="text-sm text-ps-muted">Start your streak today!</p>
+    <p class="mono" style="color: var(--ink-3); margin: 0;">Start your streak today.</p>
 {% endif %}

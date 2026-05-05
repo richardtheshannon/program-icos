@@ -1,0 +1,2721 @@
+/*
+ * app.css — ritual.icos.dev v2 (Frame Studio redesign)
+ *
+ * Phase B: Frame Studio CSS port. Replaces v1 sidebar / topbar / mobile-drawer
+ * / admin-subnav chrome wholesale. Tokens loaded by tokens.css (linked first).
+ *
+ * Source: _design_bundle/frame-studio-incoming/icon-border-python-remix/
+ *         project/Frame Studio.html — <style> block ported intact, with:
+ *
+ *   - Frame Studio's :root block dropped (tokens.css supersedes it).
+ *   - --accent-2 → var(--accent-hover) (renamed in tokens.css).
+ *   - clamp() literals → tokens (--border-w, --rail-icon-size, --frame-inset).
+ *   - bg url → /assets/images/hero-forest.jpg (Phase A asset).
+ *   - .bg::after duplicate merged: gradient overlay via .bg::after, grain via
+ *     .bg .grain. Frame Studio.html's prototype declares .bg::after twice and
+ *     the second silently shadows the first (the gradient overlay was being
+ *     lost). Splitting them onto a child element preserves both layers.
+ *   - .workspace overflow set to auto (Phase B keeps existing {% block content %}
+ *     and admin tables / dashboards must scroll inside the frame).
+ *   - .drawer-head / .drawer-body / .drawer-foot scoped under .app-drawer to
+ *     avoid colliding with v1's admin-form-drawer (htmx-swapped) which uses
+ *     the same bare class names. v1's drawer scrim/position styles are gone
+ *     in this port; the admin drawer renders unstyled inline until Phase G.
+ *
+ * Hero / page-nav / inspector form styles (.hero-*, .page-nav, .field, .row,
+ * .sec, .ws-foot) intentionally omitted — they belong to Phase E (dashboard
+ * hero) and were prototype-only inspector chrome.
+ *
+ * v1 dashboard / admin / analytics / login styles are intentionally absent.
+ * They reappear surface-by-surface in Phases E + G.
+ */
+
+* { box-sizing: border-box; }
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: var(--font-ui);
+    color: var(--rail-fg);
+    background: #000;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; padding: 0; }
+input, textarea, select { font: inherit; color: inherit; }
+a { color: inherit; text-decoration: none; }
+
+/* ---------- Page backdrop (full-bleed nature photo + overlays) ---------- */
+.bg {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+}
+.bg::before {
+    content: "";
+    position: absolute;
+    inset: -6%;
+    background-image: url('/assets/images/hero-forest.jpg');
+    background-size: cover;
+    background-position: center;
+    animation: bg-drift 48s ease-in-out infinite alternate;
+    will-change: transform;
+}
+.bg::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: var(--photo-overlay);
+    pointer-events: none;
+}
+.bg .grain {
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.06  0 0 0 0 0.06  0 0 0 0 0.06  0 0 0 0.14 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    opacity: 0.35;
+    mix-blend-mode: overlay;
+    pointer-events: none;
+}
+@keyframes bg-drift {
+    0%   { transform: scale(1.00) translate3d(0, 0, 0); }
+    50%  { transform: scale(1.06) translate3d(-1.2%, 0.8%, 0); }
+    100% { transform: scale(1.03) translate3d(1.0%, -0.6%, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .bg::before { animation: none; }
+}
+
+/* ---------- Frame: 3x3 grid of corners + rails + workspace ---------- */
+.app {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: var(--border-w) 1fr var(--border-w);
+    grid-template-rows:    var(--border-w) 1fr var(--border-w);
+    padding: var(--frame-inset);
+    gap: 0;
+}
+.frame {
+    position: absolute;
+    inset: var(--frame-inset);
+    border: 1px solid var(--frame-border);
+    border-radius: var(--radius);
+    background: transparent;
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* ---------- Border regions (rails) ---------- */
+.region {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.region.top    { grid-column: 2 / 3; grid-row: 1 / 2;
+                 border-bottom: 1px solid var(--rail-line); }
+.region.bottom { grid-column: 2 / 3; grid-row: 3 / 4;
+                 border-top:    1px solid var(--rail-line); }
+.region.left   { grid-column: 1 / 2; grid-row: 2 / 3;
+                 border-right:  1px solid var(--rail-line);
+                 flex-direction: column; }
+.region.right  { grid-column: 3 / 4; grid-row: 2 / 3;
+                 border-left:   1px solid var(--rail-line);
+                 flex-direction: column; }
+
+.region.top,
+.region.bottom {
+    padding: 0 12px;
+    justify-content: flex-start;
+    gap: 2px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+}
+.region.left {
+    padding: 12px 0;
+    justify-content: flex-start;
+    gap: 2px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: none;
+}
+.region.right {
+    padding: 12px 0;
+    justify-content: flex-end;
+    gap: 2px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: none;
+}
+.region::-webkit-scrollbar { display: none; }
+.region > .rail-label,
+.region > .ib,
+.region > .divider-v,
+.region > .divider-h { flex: 0 0 auto; }
+
+/* ---------- Corners ---------- */
+.corner {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.corner.tl { grid-column: 1 / 2; grid-row: 1 / 2;
+             border-right:  1px solid var(--rail-line);
+             border-bottom: 1px solid var(--rail-line); }
+.corner.tr { grid-column: 3 / 4; grid-row: 1 / 2;
+             border-left:   1px solid var(--rail-line);
+             border-bottom: 1px solid var(--rail-line); }
+.corner.bl { grid-column: 1 / 2; grid-row: 3 / 4;
+             border-right:  1px solid var(--rail-line);
+             border-top:    1px solid var(--rail-line); }
+.corner.br { grid-column: 3 / 4; grid-row: 3 / 4;
+             border-left:   1px solid var(--rail-line);
+             border-top:    1px solid var(--rail-line); }
+
+/* ---------- Phase B placeholder marks (corners + rails) ----------
+ * Visible until Phase C wires real corner content and Phase D wires
+ * rail icons. They make the empty frame readable so positioning can be
+ * verified without rendering invisible empty boxes. */
+.corner-placeholder {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--rail-fg-dim);
+    border: 1px dashed var(--rail-line);
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+}
+
+/* ---------- Logo (TL — Phase C wires real content) ---------- */
+.logo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1;
+    gap: 3px;
+    color: var(--rail-fg);
+}
+.logo .mark {
+    width: 22px;
+    height: 22px;
+    border: 1.5px solid var(--rail-fg);
+    border-radius: 2px;
+    position: relative;
+}
+.logo .mark::after {
+    content: "";
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    right: 4px;
+    bottom: 4px;
+    background: var(--rail-fg);
+    border-radius: 1px;
+}
+.logo .name {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 13px;
+    letter-spacing: 0.02em;
+}
+
+/* ---------- Avatar (BL — Phase C real content: first-letter initial) ---------- */
+.avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #7b8a5e, #3e4a2d);
+    position: relative;
+    border: 1px solid rgba(14, 15, 12, 0.25);
+    display: grid;
+    place-items: center;
+    color: rgba(245, 242, 234, 0.95);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    user-select: none;
+}
+.avatar .avatar-initial { line-height: 1; }
+.avatar .dot {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--bone);
+}
+
+/* ---------- Icon buttons (rails — wired in Phase D) ---------- */
+.ib {
+    width:  var(--rail-icon-size);
+    height: var(--rail-icon-size);
+    border: 1px solid transparent;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    background: transparent;
+    color: var(--rail-fg);
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.08s ease;
+    position: relative;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
+}
+.ib:hover  { background: rgba(245, 242, 234, 0.10); }
+.ib:active { transform: scale(0.96); }
+.ib svg {
+    width:  clamp(17px, 2.2vw, 20px);
+    height: clamp(17px, 2.2vw, 20px);
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.ib[aria-selected="true"] {
+    background: var(--accent);
+    color: var(--rail-fg);
+    border-color: var(--accent);
+}
+.ib[aria-selected="true"]::after {
+    content: "";
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: var(--accent);
+    border-radius: 50%;
+    top: 4px;
+    right: 4px;
+}
+
+/* dividers inside rails */
+.divider-v { width: 1px;  height: 18px; background: rgba(245, 242, 234, 0.30); margin: 0 6px;  align-self: center; }
+.divider-h { height: 1px; width: 18px;  background: rgba(245, 242, 234, 0.30); margin: 6px 0;  align-self: center; }
+
+/* tooltip */
+.ib .tip {
+    position: absolute;
+    background: var(--ink);
+    color: var(--bone);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.05em;
+    padding: 4px 7px;
+    border-radius: 4px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.12s ease;
+    z-index: 20;
+}
+.region.top    .ib .tip { top:    calc(100% + 6px); left: 50%; transform: translateX(-50%); }
+.region.bottom .ib .tip { bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); }
+.region.left   .ib .tip { left:   calc(100% + 6px); top:  50%; transform: translateY(-50%); }
+.region.right  .ib .tip { right:  calc(100% + 6px); top:  50%; transform: translateY(-50%); }
+.ib:hover .tip { opacity: 1; }
+
+/* top rail clock label (Phase D repoints dashboard-clock.js here) */
+.rail-clock {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+    font-family: var(--font-mono);
+    color: rgba(245, 242, 234, 0.85);
+}
+.rail-clock .time {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    color: var(--rail-fg);
+}
+.rail-clock .sep  { color: rgba(245, 242, 234, 0.45); font-size: 10px; }
+.rail-clock .date { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--rail-fg-dim); }
+.rail-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(245, 242, 234, 0.75);
+    margin-left: auto;
+    padding-right: 4px;
+    white-space: nowrap;
+}
+
+/* ---------- Workspace ---------- */
+.workspace {
+    grid-column: 2 / 3;
+    grid-row: 2 / 3;
+    position: relative;
+    z-index: 3;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background: transparent;
+    color: var(--rail-fg);
+    padding: clamp(20px, 4vw, 40px) clamp(22px, 5vw, 56px) clamp(18px, 3vw, 28px);
+}
+/* Phase E + G replace child layout. Phase B leaves {% block content %}
+   to render whatever existing v1 templates produce — visually broken
+   inside the new frame is expected. */
+
+/* ---------- Page transitions (CSS only; JS triggers wired Phase F) ---------- */
+.ib, .corner > * { will-change: transform, opacity; }
+
+.app.exiting .region.top    .ib { animation: flyOutUp    0.42s cubic-bezier(0.6, 0.0, 0.9, 0.3) both; animation-delay: var(--d, 0ms); }
+.app.exiting .region.bottom .ib { animation: flyOutDown  0.42s cubic-bezier(0.6, 0.0, 0.9, 0.3) both; animation-delay: var(--d, 0ms); }
+.app.exiting .region.left   .ib { animation: flyOutLeft  0.42s cubic-bezier(0.6, 0.0, 0.9, 0.3) both; animation-delay: var(--d, 0ms); }
+.app.exiting .region.right  .ib { animation: flyOutRight 0.42s cubic-bezier(0.6, 0.0, 0.9, 0.3) both; animation-delay: var(--d, 0ms); }
+.app.exiting .corner.tl > * { animation: flyOutTL 0.4s ease-in both; animation-delay: 80ms; }
+.app.exiting .corner.tr > * { animation: flyOutTR 0.4s ease-in both; animation-delay: 80ms; }
+.app.exiting .corner.bl > * { animation: flyOutBL 0.4s ease-in both; animation-delay: 80ms; }
+.app.exiting .corner.br > * { animation: flyOutBR 0.4s ease-in both; animation-delay: 80ms; }
+.app.exiting .region,
+.app.exiting .corner { transition: border-color 0.3s ease 0.2s; border-color: transparent !important; }
+
+.app.entering .region.top    .ib { animation: flyInUp    0.55s cubic-bezier(0.2, 0.7, 0.2, 1.1) both; animation-delay: var(--d, 0ms); }
+.app.entering .region.bottom .ib { animation: flyInDown  0.55s cubic-bezier(0.2, 0.7, 0.2, 1.1) both; animation-delay: var(--d, 0ms); }
+.app.entering .region.left   .ib { animation: flyInLeft  0.55s cubic-bezier(0.2, 0.7, 0.2, 1.1) both; animation-delay: var(--d, 0ms); }
+.app.entering .region.right  .ib { animation: flyInRight 0.55s cubic-bezier(0.2, 0.7, 0.2, 1.1) both; animation-delay: var(--d, 0ms); }
+.app.entering .corner.tl > * { animation: flyInTL 0.55s cubic-bezier(0.2, 0.7, 0.2, 1.1) both; animation-delay: 120ms; }
+.app.entering .corner.tr > * { animation: flyInTR 0.55s cubic-bezier(0.2, 0.7, 0.2, 1.1) both; animation-delay: 120ms; }
+.app.entering .corner.bl > * { animation: flyInBL 0.55s cubic-bezier(0.2, 0.7, 0.2, 1.1) both; animation-delay: 120ms; }
+.app.entering .corner.br > * { animation: flyInBR 0.55s cubic-bezier(0.2, 0.7, 0.2, 1.1) both; animation-delay: 120ms; }
+.app.entering .region,
+.app.entering .corner { animation: borderFade 0.4s ease 0.15s both; }
+
+@keyframes flyOutUp    { to { transform: translate3d(0, -80px, 0)  scale(0.7); opacity: 0; } }
+@keyframes flyOutDown  { to { transform: translate3d(0,  80px, 0)  scale(0.7); opacity: 0; } }
+@keyframes flyOutLeft  { to { transform: translate3d(-80px, 0, 0)  scale(0.7); opacity: 0; } }
+@keyframes flyOutRight { to { transform: translate3d( 80px, 0, 0)  scale(0.7); opacity: 0; } }
+@keyframes flyInUp     { from { transform: translate3d(0, -100px, 0) scale(0.6); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes flyInDown   { from { transform: translate3d(0,  100px, 0) scale(0.6); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes flyInLeft   { from { transform: translate3d(-100px, 0, 0) scale(0.6); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes flyInRight  { from { transform: translate3d( 100px, 0, 0) scale(0.6); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes flyOutTL    { to { transform: translate3d(-40px, -40px, 0) scale(0.5); opacity: 0; } }
+@keyframes flyOutTR    { to { transform: translate3d( 40px, -40px, 0) scale(0.5); opacity: 0; } }
+@keyframes flyOutBL    { to { transform: translate3d(-40px,  40px, 0) scale(0.5); opacity: 0; } }
+@keyframes flyOutBR    { to { transform: translate3d( 40px,  40px, 0) scale(0.5); opacity: 0; } }
+@keyframes flyInTL     { from { transform: translate3d(-60px, -60px, 0) scale(0.4); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes flyInTR     { from { transform: translate3d( 60px, -60px, 0) scale(0.4); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes flyInBL     { from { transform: translate3d(-60px,  60px, 0) scale(0.4); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes flyInBR     { from { transform: translate3d( 60px,  60px, 0) scale(0.4); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes borderFade  { from { border-color: transparent; } }
+
+/* ---------- Menu button (BR corner — wired Phase C) ---------- */
+.menu-btn {
+    width: 34px;
+    height: 34px;
+    background: transparent;
+    border: 1px solid var(--frame-border);
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    color: var(--rail-fg);
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.08s ease;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
+}
+.menu-btn:hover {
+    background: rgba(245, 242, 234, 0.10);
+    border-color: rgba(245, 242, 234, 0.55);
+}
+.menu-btn:active { transform: scale(0.96); }
+.menu-btn svg {
+    width: 18px;
+    height: 18px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+}
+.menu-btn[aria-expanded="true"] {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+/* ---------- Menu drawer (accordion nav — wired Phase C) ---------- */
+.menu-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100vh;
+    width: min(340px, 88vw);
+    background: rgba(245, 242, 234, 0.98);
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+    border-left: 1px solid rgba(14, 15, 12, 0.10);
+    box-shadow: -24px 0 60px rgba(0, 0, 0, 0.25);
+    z-index: 60;
+    transform: translateX(100%);
+    transition: transform 0.42s cubic-bezier(0.2, 0.7, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    color: var(--ink);
+}
+.menu-drawer.open { transform: translateX(0); }
+
+.menu-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 22px 22px 18px;
+    border-bottom: 1px solid rgba(14, 15, 12, 0.08);
+}
+.menu-head .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(14, 15, 12, 0.50);
+    margin-bottom: 6px;
+}
+.menu-head .title {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 22px;
+    line-height: 1;
+}
+.menu-close {
+    width: 30px;
+    height: 30px;
+    border: 1px solid rgba(14, 15, 12, 0.15);
+    background: transparent;
+    border-radius: 8px;
+    color: var(--ink);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+.menu-close:hover { background: rgba(14, 15, 12, 0.06); }
+.menu-close svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; }
+
+.menu-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 6px 0 12px;
+}
+
+.acc-item { border-bottom: 1px solid rgba(14, 15, 12, 0.07); }
+.acc-item:last-child { border-bottom: 0; }
+
+.acc-trigger {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 22px;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    text-align: left;
+    color: var(--ink);
+    font-family: var(--font-ui);
+    transition: background 0.15s ease;
+}
+.acc-trigger:hover { background: rgba(14, 15, 12, 0.04); }
+.acc-trigger .ic {
+    width: 22px;
+    height: 22px;
+    display: grid;
+    place-items: center;
+    color: rgba(14, 15, 12, 0.70);
+    flex: 0 0 auto;
+}
+.acc-trigger .ic svg {
+    width: 18px;
+    height: 18px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.acc-trigger .lbl {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.005em;
+}
+.acc-trigger .meta {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: rgba(14, 15, 12, 0.40);
+    letter-spacing: 0.08em;
+}
+.acc-trigger .chev {
+    width: 16px;
+    height: 16px;
+    color: rgba(14, 15, 12, 0.45);
+    transition: transform 0.3s ease;
+    flex: 0 0 auto;
+}
+.acc-trigger .chev svg { width: 100%; height: 100%; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.acc-item.open .acc-trigger .chev { transform: rotate(90deg); color: var(--accent); }
+.acc-item.open .acc-trigger { background: rgba(14, 15, 12, 0.03); }
+
+.acc-panel {
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.32s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.acc-panel-inner {
+    padding: 2px 22px 16px 58px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.acc-panel a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px;
+    border-radius: 6px;
+    text-decoration: none;
+    color: rgba(14, 15, 12, 0.75);
+    font-family: var(--font-ui);
+    font-size: 13px;
+    transition: background 0.12s ease, color 0.12s ease;
+}
+.acc-panel a:hover {
+    background: rgba(14, 15, 12, 0.05);
+    color: var(--ink);
+}
+.acc-panel a .tag {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: rgba(14, 15, 12, 0.40);
+}
+.acc-panel a.current {
+    color: var(--accent);
+    font-weight: 500;
+}
+.acc-panel a.current::before {
+    content: "• ";
+    margin-right: 4px;
+}
+
+.menu-foot {
+    border-top: 1px solid rgba(14, 15, 12, 0.08);
+    padding: 14px 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(14, 15, 12, 0.50);
+}
+.menu-foot a {
+    color: var(--ink);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(14, 15, 12, 0.25);
+    padding-bottom: 1px;
+}
+
+/* ---------- App drawer button (TR corner — wired Phase C) ---------- */
+.app-drawer-btn {
+    width: 34px;
+    height: 34px;
+    background: transparent;
+    border: 1px solid var(--frame-border);
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    color: var(--rail-fg);
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.08s ease;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
+}
+.app-drawer-btn:hover {
+    background: rgba(245, 242, 234, 0.10);
+    border-color: rgba(245, 242, 234, 0.55);
+}
+.app-drawer-btn:active { transform: scale(0.96); }
+.app-drawer-btn svg { width: 18px; height: 18px; fill: currentColor; }
+.app-drawer-btn[aria-expanded="true"] {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+/* ---------- App drawer (TR drawer — wired Phase C; scoped to avoid
+   colliding with v1's htmx admin form drawer that uses bare
+   .drawer-head / .drawer-body / .drawer-foot class names) ---------- */
+.drawer-scrim {
+    position: fixed;
+    inset: 0;
+    background: rgba(8, 9, 7, 0.45);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    z-index: 50;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+.drawer-scrim.open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.app-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100vh;
+    width: min(360px, 88vw);
+    background: rgba(14, 15, 12, 0.92);
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+    border-left: 1px solid rgba(245, 242, 234, 0.12);
+    box-shadow: -24px 0 60px rgba(0, 0, 0, 0.50);
+    z-index: 60;
+    transform: translateX(100%);
+    transition: transform 0.42s cubic-bezier(0.2, 0.7, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    color: var(--rail-fg);
+}
+.app-drawer.open { transform: translateX(0); }
+
+.app-drawer .drawer-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 22px 22px 18px;
+    border-bottom: 1px solid rgba(245, 242, 234, 0.08);
+}
+.app-drawer .drawer-head .title {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 22px;
+    line-height: 1;
+}
+.app-drawer .drawer-head .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(245, 242, 234, 0.55);
+    margin-bottom: 6px;
+}
+.app-drawer .drawer-close {
+    width: 30px;
+    height: 30px;
+    border: 1px solid rgba(245, 242, 234, 0.20);
+    background: transparent;
+    border-radius: 8px;
+    color: var(--rail-fg);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+.app-drawer .drawer-close:hover { background: rgba(245, 242, 234, 0.08); }
+.app-drawer .drawer-close svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.6; stroke-linecap: round; }
+
+.app-drawer .drawer-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 18px 14px 22px;
+}
+.app-drawer .drawer-section { margin-bottom: 22px; }
+.app-drawer .drawer-section:last-child { margin-bottom: 0; }
+.app-drawer .drawer-section h6 {
+    margin: 0 0 10px 8px;
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.20em;
+    color: rgba(245, 242, 234, 0.45);
+    font-weight: 500;
+}
+.app-drawer .drawer-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+}
+.app-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 6px;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--rail-fg);
+    cursor: pointer;
+    text-align: center;
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.08s ease;
+}
+.app-tile:hover {
+    background: rgba(245, 242, 234, 0.06);
+    border-color: rgba(245, 242, 234, 0.12);
+}
+.app-tile:active { transform: scale(0.97); }
+.app-tile .glyph {
+    width: 38px;
+    height: 38px;
+    border-radius: 9px;
+    display: grid;
+    place-items: center;
+    background: rgba(245, 242, 234, 0.08);
+    border: 1px solid rgba(245, 242, 234, 0.14);
+    color: var(--rail-fg);
+}
+.app-tile .glyph svg {
+    width: 18px;
+    height: 18px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.app-tile.accent .glyph {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+.app-tile .lbl {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(245, 242, 234, 0.78);
+    line-height: 1.2;
+}
+
+.app-drawer .drawer-foot {
+    border-top: 1px solid rgba(245, 242, 234, 0.08);
+    padding: 14px 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(245, 242, 234, 0.50);
+}
+.app-drawer .drawer-foot a {
+    color: rgba(245, 242, 234, 0.78);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(245, 242, 234, 0.25);
+    padding-bottom: 1px;
+}
+.app-drawer .drawer-foot a:hover { color: var(--rail-fg); }
+
+/* ---------- Phase C deltas ---------- */
+
+/* Dashboard accordion item has no children — render as a click-through link.
+   Override the chevron rotation behavior (no panel to expand) and use the
+   →-style arrow icon (already rendered inline) instead of the > chev. */
+.acc-item.acc-leaf .acc-trigger { color: var(--ink); }
+.acc-item.acc-leaf .acc-trigger:hover .chev { transform: translateX(2px); }
+.acc-item.acc-leaf .acc-trigger .chev {
+    width: 16px;
+    height: 16px;
+    color: rgba(14, 15, 12, 0.45);
+    transition: transform 0.18s ease, color 0.18s ease;
+    flex: 0 0 auto;
+}
+.acc-item.acc-leaf .acc-trigger .chev svg { width: 100%; height: 100%; }
+.acc-item.acc-leaf.is-current .acc-trigger {
+    background: rgba(14, 15, 12, 0.04);
+    color: var(--accent);
+}
+.acc-item.acc-leaf.is-current .acc-trigger .chev { color: var(--accent); }
+.acc-item.acc-leaf.is-current .acc-trigger::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--accent);
+}
+.acc-trigger { position: relative; }
+/* The .open state on a non-leaf section that's also the active surface picks
+   up an accent left-stripe for visual consistency with the leaf-current. */
+.acc-item.open:not(.acc-leaf) > .acc-trigger::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--accent);
+}
+
+/* Inline logout form in the menu footer — make the submit button look like
+   the existing "View all" anchor link. */
+.menu-foot .logout-inline {
+    margin: 0;
+    padding: 0;
+    display: inline-flex;
+}
+.menu-foot .logout-inline button {
+    background: transparent;
+    border: 0;
+    padding: 0 0 1px;
+    cursor: pointer;
+    color: var(--ink);
+    font: inherit;
+    border-bottom: 1px solid rgba(14, 15, 12, 0.25);
+    letter-spacing: inherit;
+    text-transform: inherit;
+}
+.menu-foot .logout-inline button:hover {
+    border-bottom-color: var(--accent);
+    color: var(--accent);
+}
+
+/* App-tile disabled state — Studio/Workshop/System placeholders are inert
+   except for the accent "Ritual" tile. Per V7 the TR drawer is a placeholder
+   surface; subdomain switcher comes later. */
+.app-tile[disabled] {
+    cursor: default;
+    opacity: 0.55;
+}
+.app-tile[disabled]:hover {
+    background: transparent;
+    border-color: transparent;
+}
+.app-tile[disabled]:active { transform: none; }
+
+/* Disable accordion-trigger transition on the leaf item so the dashboard arrow
+   doesn't accidentally rotate 90° from the global .acc-item.open rule. */
+.acc-item.acc-leaf.open .acc-trigger .chev { transform: none; color: var(--accent); }
+
+/* ---------- Phase D deltas ---------- */
+
+/* Mode picker (Photo / Light / Dark) + View-mode pressed visual reuse
+   the .ib accent treatment. Active mode button = aria-pressed="true". */
+.ib[aria-pressed="true"] {
+    background: var(--accent);
+    color: var(--rail-fg);
+    border-color: var(--accent);
+}
+
+/* Sign-out rail icon is wrapped in a real <form method="post" action="/logout">
+   so the action POSTs without JS. display: contents flattens the form into
+   the rail's flexbox so the .ib button sits flush with siblings. */
+.rail-logout {
+    display: contents;
+    margin: 0;
+    padding: 0;
+}
+
+/* Shared "Coming soon" stub modal — opened by Search / Activity / Quick-note /
+   Help rail icons. Native <dialog> handles modal mode + ESC + focus trap. */
+.stub-modal {
+    border: 0;
+    border-radius: var(--radius);
+    padding: 0;
+    background: rgba(245, 242, 234, 0.98);
+    color: var(--ink);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.30);
+    max-width: min(380px, 86vw);
+}
+.stub-modal::backdrop {
+    background: rgba(8, 9, 7, 0.45);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+}
+.stub-modal-inner {
+    padding: 28px 24px 22px;
+    text-align: center;
+}
+.stub-modal .stub-title {
+    margin: 0 0 8px;
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 22px;
+    line-height: 1.1;
+}
+.stub-modal .stub-desc {
+    margin: 0 0 18px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(14, 15, 12, 0.55);
+}
+.stub-modal .stub-close {
+    background: var(--ink);
+    color: var(--bone);
+    border: 0;
+    padding: 9px 18px;
+    border-radius: 8px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+.stub-modal .stub-close:hover { background: var(--accent); }
+
+/* ---------- Phase E: Dashboard magazine hero ---------- */
+.hero {
+    color: var(--bone);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(20px, 2.6vw, 36px);
+    padding: clamp(20px, 3vw, 40px) clamp(16px, 3vw, 36px);
+    min-height: 100%;
+}
+.hero-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    flex-wrap: wrap;
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    letter-spacing: var(--tracking-eyebrow);
+    text-transform: uppercase;
+    color: rgba(245, 242, 234, 0.85);
+}
+.hero-head .eyebrow span {
+    display: inline-block;
+    padding: 4px 10px;
+    border: 1px solid rgba(245, 242, 234, 0.45);
+    border-radius: 999px;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+.hero-head .meta {
+    text-align: right;
+    line-height: 1.7;
+    opacity: 0.9;
+    text-transform: none;
+    letter-spacing: 0.04em;
+}
+.hero-head .meta .num {
+    font-family: var(--font-mono);
+    color: var(--bone);
+}
+.hero-center {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    gap: clamp(16px, 2.5vw, 24px);
+    min-height: clamp(180px, 30vh, 320px);
+    padding: 12px 0;
+}
+.hero-title {
+    font-family: var(--font-display);
+    font-size: var(--t-display);
+    line-height: 0.95;
+    letter-spacing: -0.015em;
+    color: var(--bone);
+    text-shadow: 0 2px 30px rgba(0, 0, 0, 0.45);
+    max-width: 18ch;
+    margin: 0;
+    font-weight: 400;
+}
+.hero-title em {
+    font-style: italic;
+    color: rgba(245, 242, 234, 0.82);
+}
+.hero-foot {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr;
+    gap: clamp(16px, 3vw, 36px);
+    align-items: end;
+}
+.hero-lede {
+    font-family: var(--font-ui);
+    font-size: var(--t-base);
+    line-height: 1.55;
+    max-width: 44ch;
+    color: rgba(245, 242, 234, 0.92);
+    text-shadow: 0 1px 10px rgba(0, 0, 0, 0.4);
+    font-weight: 400;
+    margin: 0;
+}
+.hero-lede::before {
+    content: "";
+    display: block;
+    width: 38px;
+    height: 1px;
+    background: rgba(245, 242, 234, 0.65);
+    margin-bottom: 12px;
+}
+.hero-lede .num {
+    font-family: var(--font-mono);
+    color: var(--bone);
+}
+.hero-stats {
+    display: flex;
+    gap: clamp(18px, 2.8vw, 28px);
+    justify-self: center;
+    text-align: center;
+}
+.hero-stats .stat .n {
+    display: block;
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: var(--t-2xl);
+    line-height: 1;
+    color: var(--bone);
+}
+.hero-stats .stat .l {
+    display: block;
+    margin-top: 6px;
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-eyebrow);
+    color: rgba(245, 242, 234, 0.7);
+}
+.hero-cta {
+    justify-self: end;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-end;
+}
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 18px;
+    border-radius: 999px;
+    font-family: var(--font-ui);
+    font-size: var(--t-base);
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid transparent;
+    text-decoration: none;
+    line-height: 1;
+    transition: transform 0.08s ease, background 0.15s ease, border-color 0.15s ease;
+}
+.btn:active { transform: scale(0.98); }
+.btn-primary {
+    background: var(--accent);
+    color: var(--bone);
+}
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-ghost {
+    background: rgba(245, 242, 234, 0.10);
+    color: var(--bone);
+    border-color: rgba(245, 242, 234, 0.5);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+.btn-ghost:hover {
+    background: rgba(245, 242, 234, 0.18);
+    border-color: rgba(245, 242, 234, 0.7);
+}
+.btn svg {
+    width: 14px;
+    height: 14px;
+}
+.hero-cta .cta-done {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 14px;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: var(--bone);
+    border: 1px solid rgba(245, 242, 234, 0.45);
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+.hero-cta .cta-done .num {
+    color: var(--bone);
+    text-transform: none;
+    letter-spacing: 0.04em;
+}
+.hero-cta.htmx-swapping { opacity: 0.55; transition: opacity 0.15s ease; }
+.hero-strip {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(16px, 3vw, 28px);
+    border-top: 1px solid rgba(245, 242, 234, 0.18);
+    padding-top: 16px;
+    margin-top: 4px;
+    font-family: var(--font-mono);
+    font-size: var(--t-sm);
+    color: rgba(245, 242, 234, 0.85);
+}
+.hero-strip .strip-cell {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.hero-strip .strip-cell-next {
+    justify-content: flex-end;
+    text-align: right;
+}
+.hero-strip .strip-label {
+    font-size: var(--t-xs);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-eyebrow);
+    color: rgba(245, 242, 234, 0.55);
+}
+.hero-strip .strip-time {
+    color: var(--bone);
+}
+.hero-strip .strip-title {
+    font-family: var(--font-ui);
+    font-size: var(--t-base);
+    color: var(--bone);
+    text-transform: none;
+    letter-spacing: 0;
+}
+.hero-strip .strip-empty {
+    color: rgba(245, 242, 234, 0.4);
+    font-family: var(--font-ui);
+}
+
+/* ==========================================================================
+   Phase F — Page transitions (deconstruct / reconstruct)
+   --------------------------------------------------------------------------
+   Class lifecycle:
+     html.mode-exiting  — added by frame.js on top-level <a.nav-top-level>
+                          click; removed when the browser navigates away
+                          (~600ms later).
+     html.mode-entering — added by the inline <head> script BEFORE first
+                          paint when sessionStorage flagged a transition,
+                          so the new page paints with rails offscreen and
+                          they fly inward; removed by frame.js after the
+                          entering keyframes finish (~1100ms).
+   Per-icon stagger comes from the inline `style="--d:Nms"` on each .ib in
+   frame_rails.twig (0/30/60ms — outside-in — so corner-adjacent icons
+   exit first / enter last). Corners + hero blocks use fixed delays.
+   prefers-reduced-motion fully disables animation (JS also bails before
+   even adding the classes; this @media block is defense-in-depth).
+   ========================================================================== */
+
+.region .ib,
+.corner > *,
+.hero-head,
+.hero-center,
+.hero-foot {
+    will-change: transform, opacity;
+}
+
+/* EXIT: icons fly outward toward their rail's outer edge */
+.mode-exiting .region.top    .ib { animation: flyOutUp    0.42s cubic-bezier(0.6, 0, 0.9, 0.3) both; animation-delay: var(--d, 0ms); }
+.mode-exiting .region.bottom .ib { animation: flyOutDown  0.42s cubic-bezier(0.6, 0, 0.9, 0.3) both; animation-delay: var(--d, 0ms); }
+.mode-exiting .region.left   .ib { animation: flyOutLeft  0.42s cubic-bezier(0.6, 0, 0.9, 0.3) both; animation-delay: var(--d, 0ms); }
+.mode-exiting .region.right  .ib { animation: flyOutRight 0.42s cubic-bezier(0.6, 0, 0.9, 0.3) both; animation-delay: var(--d, 0ms); }
+.mode-exiting .corner.tl > * { animation: flyOutTL 0.4s ease-in both; animation-delay: 80ms; }
+.mode-exiting .corner.tr > * { animation: flyOutTR 0.4s ease-in both; animation-delay: 80ms; }
+.mode-exiting .corner.bl > * { animation: flyOutBL 0.4s ease-in both; animation-delay: 80ms; }
+.mode-exiting .corner.br > * { animation: flyOutBR 0.4s ease-in both; animation-delay: 80ms; }
+.mode-exiting .region,
+.mode-exiting .corner { transition: border-color 0.3s ease 0.2s; border-color: transparent !important; }
+.mode-exiting .hero-head   { animation: heroOut 0.4s  cubic-bezier(0.5, 0, 0.9, 0.3) both; }
+.mode-exiting .hero-center { animation: heroOut 0.42s cubic-bezier(0.5, 0, 0.9, 0.3) both; animation-delay: 40ms; }
+.mode-exiting .hero-foot   { animation: heroOut 0.44s cubic-bezier(0.5, 0, 0.9, 0.3) both; animation-delay: 80ms; }
+
+/* ENTER: icons fly inward from outside */
+.mode-entering .region.top    .ib { animation: flyInUp    0.55s cubic-bezier(0.2, 0.7, 0.2, 1.1) both; animation-delay: var(--d, 0ms); }
+.mode-entering .region.bottom .ib { animation: flyInDown  0.55s cubic-bezier(0.2, 0.7, 0.2, 1.1) both; animation-delay: var(--d, 0ms); }
+.mode-entering .region.left   .ib { animation: flyInLeft  0.55s cubic-bezier(0.2, 0.7, 0.2, 1.1) both; animation-delay: var(--d, 0ms); }
+.mode-entering .region.right  .ib { animation: flyInRight 0.55s cubic-bezier(0.2, 0.7, 0.2, 1.1) both; animation-delay: var(--d, 0ms); }
+.mode-entering .corner.tl > * { animation: flyInTL 0.55s cubic-bezier(0.2, 0.7, 0.2, 1.1) both; animation-delay: 120ms; }
+.mode-entering .corner.tr > * { animation: flyInTR 0.55s cubic-bezier(0.2, 0.7, 0.2, 1.1) both; animation-delay: 120ms; }
+.mode-entering .corner.bl > * { animation: flyInBL 0.55s cubic-bezier(0.2, 0.7, 0.2, 1.1) both; animation-delay: 120ms; }
+.mode-entering .corner.br > * { animation: flyInBR 0.55s cubic-bezier(0.2, 0.7, 0.2, 1.1) both; animation-delay: 120ms; }
+.mode-entering .region,
+.mode-entering .corner { animation: borderFade 0.4s ease 0.15s both; }
+.mode-entering .hero-head   { animation: heroIn 0.65s cubic-bezier(0.2, 0.7, 0.2, 1) both; animation-delay: 180ms; }
+.mode-entering .hero-center { animation: heroIn 0.7s  cubic-bezier(0.2, 0.7, 0.2, 1) both; animation-delay: 260ms; }
+.mode-entering .hero-foot   { animation: heroIn 0.75s cubic-bezier(0.2, 0.7, 0.2, 1) both; animation-delay: 340ms; }
+
+@keyframes flyOutUp    { to { transform: translate3d(0, -80px, 0) scale(0.7); opacity: 0; } }
+@keyframes flyOutDown  { to { transform: translate3d(0,  80px, 0) scale(0.7); opacity: 0; } }
+@keyframes flyOutLeft  { to { transform: translate3d(-80px, 0, 0) scale(0.7); opacity: 0; } }
+@keyframes flyOutRight { to { transform: translate3d( 80px, 0, 0) scale(0.7); opacity: 0; } }
+@keyframes flyInUp     { from { transform: translate3d(0, -100px, 0) scale(0.6); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes flyInDown   { from { transform: translate3d(0,  100px, 0) scale(0.6); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes flyInLeft   { from { transform: translate3d(-100px, 0, 0) scale(0.6); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes flyInRight  { from { transform: translate3d( 100px, 0, 0) scale(0.6); opacity: 0; } to { transform: none; opacity: 1; } }
+
+@keyframes flyOutTL { to { transform: translate3d(-40px, -40px, 0) scale(0.5); opacity: 0; } }
+@keyframes flyOutTR { to { transform: translate3d( 40px, -40px, 0) scale(0.5); opacity: 0; } }
+@keyframes flyOutBL { to { transform: translate3d(-40px,  40px, 0) scale(0.5); opacity: 0; } }
+@keyframes flyOutBR { to { transform: translate3d( 40px,  40px, 0) scale(0.5); opacity: 0; } }
+@keyframes flyInTL  { from { transform: translate3d(-60px, -60px, 0) scale(0.4); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes flyInTR  { from { transform: translate3d( 60px, -60px, 0) scale(0.4); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes flyInBL  { from { transform: translate3d(-60px,  60px, 0) scale(0.4); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes flyInBR  { from { transform: translate3d( 60px,  60px, 0) scale(0.4); opacity: 0; } to { transform: none; opacity: 1; } }
+
+@keyframes heroOut    { to   { transform: translate3d(0, 30px, 0); opacity: 0; filter: blur(4px); } }
+@keyframes heroIn     { from { transform: translate3d(0, 40px, 0); opacity: 0; filter: blur(4px); } to { transform: none; opacity: 1; filter: blur(0); } }
+@keyframes borderFade { from { border-color: transparent; } }
+
+@media (prefers-reduced-motion: reduce) {
+    .mode-exiting *,
+    .mode-entering * {
+        animation: none !important;
+        transition: none !important;
+    }
+}
+
+/* ============================================================
+   Phase G — Non-Dashboard surface ports
+   Page-title hero band + bone-card content surface, plus the
+   v1 utility classes (cards/tables/fields/drawer/focus/admin)
+   that were dropped wholesale in Phase B. Inserted before the
+   responsive @media block so phase deltas stay chronological.
+   ============================================================ */
+
+/* ---------- Page hero band (eyebrow + display serif title + meta) ---------- */
+.page-hero {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: clamp(20px, 3vw, 36px);
+    flex-wrap: wrap;
+    padding: 0 0 clamp(18px, 2.4vw, 28px);
+    margin: 0 0 clamp(16px, 2vw, 24px);
+    border-bottom: 1px solid rgba(245, 242, 234, 0.18);
+    color: var(--bone);
+}
+.page-hero-headline {
+    flex: 1 1 320px;
+    min-width: 0;
+}
+.page-hero .eyebrow {
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    letter-spacing: var(--tracking-eyebrow);
+    color: rgba(245, 242, 234, 0.72);
+    margin-bottom: 10px;
+}
+.page-hero h1.display-serif {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(32px, 4.6vw, 56px);
+    font-weight: 400;
+    line-height: 1.0;
+    letter-spacing: -0.01em;
+    color: var(--bone);
+    text-shadow: 0 2px 30px rgba(0, 0, 0, 0.45);
+    max-width: 22ch;
+}
+.page-hero .page-hero-subtitle {
+    margin-top: 8px;
+    font-size: var(--t-xs);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(245, 242, 234, 0.62);
+}
+.page-hero-meta {
+    flex: 0 1 auto;
+    display: flex;
+    align-items: center;
+    gap: var(--pad-2);
+    flex-wrap: wrap;
+    color: rgba(245, 242, 234, 0.82);
+    font-family: var(--font-mono);
+    font-size: var(--t-sm);
+}
+.page-hero-meta .num { color: var(--bone); }
+.page-hero-meta .btn { white-space: nowrap; }
+
+/* ---------- Bone-card surface (photo-readable scrim) ---------- */
+.bone-card {
+    background: var(--bone-card-bg);
+    border: 1px solid var(--bone-card-line);
+    border-radius: var(--radius);
+    padding: clamp(18px, 2.4vw, 28px);
+    margin-bottom: clamp(16px, 2vw, 24px);
+    color: var(--bone);
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.18), 0 1px 0 rgba(245, 242, 234, 0.12) inset;
+    backdrop-filter: blur(2px);
+}
+.bone-card:last-child { margin-bottom: 0; }
+
+/* Flatten partials nested inside a bone-card so they sit as a single content
+   surface instead of a card-on-card. Each partial keeps its own internal head
+   + grid + chart structure but drops its own bg/border framing. */
+.bone-card .card,
+.bone-card .kpi-card,
+.bone-card .heatmap-block,
+.bone-card .breakdown-card,
+.bone-card .comparison-card,
+.bone-card .event-card {
+    background: transparent;
+    border: 0;
+    padding: 0;
+    margin: 0;
+    box-shadow: none;
+}
+.bone-card .kpi-row,
+.bone-card .breakdowns-block,
+.bone-card .heatmap-block,
+.bone-card .comparison-block { margin-bottom: 0; }
+.bone-card .kpi-card {
+    padding: var(--pad-2) 0;
+    border-right: 1px solid var(--line-soft);
+    padding-right: var(--pad-3);
+}
+.bone-card .kpi-card:last-child { border-right: 0; }
+.bone-card .breakdown-card { padding-right: var(--pad-3); }
+.bone-card .breakdown-card + .breakdown-card {
+    padding-left: var(--pad-3);
+    padding-right: 0;
+    border-left: 1px solid var(--line-soft);
+}
+@media (max-width: 900px) {
+    .bone-card .breakdown-card,
+    .bone-card .breakdown-card + .breakdown-card {
+        padding: 0;
+        border: 0;
+    }
+}
+
+/* ---------- Cards (generic; admin index sections, focus partials) ---------- */
+.card { display: block; }
+.card-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--pad-2);
+    margin-bottom: var(--pad-2);
+}
+.card-head h3 {
+    margin: 0;
+    font-size: var(--t-lg);
+    font-weight: 500;
+    letter-spacing: -0.005em;
+    color: var(--ink);
+}
+.card-head .meta,
+.meta {
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    color: var(--ink-3);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+.card-body {
+    color: var(--ink-2);
+    font-size: var(--t-base);
+    line-height: 1.45;
+}
+.card-body p { margin: 0 0 var(--pad-2); }
+.card-body p:last-child { margin: 0; }
+
+/* ---------- Tables ---------- */
+.table,
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--t-sm);
+    color: var(--ink);
+}
+.table thead th,
+.admin-table thead th {
+    text-align: left;
+    font-weight: 500;
+    font-size: var(--t-xs);
+    color: var(--ink-3);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+}
+.table tbody td,
+.admin-table tbody td {
+    padding: 10px;
+    border-bottom: 1px solid var(--line-soft);
+    vertical-align: middle;
+}
+.table tbody tr:last-child td,
+.admin-table tbody tr:last-child td { border-bottom: 0; }
+.table tbody tr:hover td,
+.admin-table tbody tr:hover td { background: rgba(14, 15, 12, 0.025); }
+.mono { font-family: var(--font-mono); }
+.num  { font-family: var(--font-mono); color: var(--ink); }
+.den  { font-family: var(--font-mono); color: var(--ink-3); }
+
+/* Wrap wide tables on narrow viewports */
+.bone-card .table-wrap {
+    overflow-x: auto;
+    margin: 0 calc(-1 * clamp(18px, 2.4vw, 28px));
+    padding: 0 clamp(18px, 2.4vw, 28px);
+}
+
+.row-actions {
+    display: flex;
+    gap: 6px;
+    justify-content: flex-end;
+}
+.row-actions-head { width: 1px; }
+
+/* ---------- Forms ---------- */
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: var(--pad-2);
+    color: var(--ink-2);
+}
+.field label,
+.field > label:first-child {
+    font-size: var(--t-xs);
+    font-weight: 500;
+    color: var(--ink-3);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+.field input[type="text"],
+.field input[type="email"],
+.field input[type="password"],
+.field input[type="number"],
+.field input[type="date"],
+.field input[type="time"],
+.field input[type="search"],
+.field select,
+.field textarea {
+    font-family: var(--font-ui);
+    font-size: var(--t-sm);
+    color: var(--ink);
+    background: var(--bg-elev);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    padding: 8px 10px;
+    width: 100%;
+    box-sizing: border-box;
+}
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--pad-2);
+}
+@media (max-width: 520px) {
+    .field-row { grid-template-columns: 1fr; }
+}
+.field-error {
+    display: block;
+    color: var(--bad);
+    font-size: var(--t-xs);
+    margin-top: 4px;
+    font-family: var(--font-ui);
+    text-transform: none;
+    letter-spacing: normal;
+}
+.field-help {
+    color: var(--ink-3);
+    font-size: var(--t-xs);
+    margin: 0 0 var(--pad-2);
+}
+.form-error {
+    display: block;
+    margin-bottom: var(--pad-2);
+    padding: 10px 12px;
+    background: var(--bad-soft);
+    border: 1px solid var(--bad);
+    border-radius: var(--radius-sm);
+    color: var(--bad);
+    font-size: var(--t-sm);
+}
+
+/* ---------- Admin htmx form drawer (#drawer-slot fed by hx-get/post) ---------- */
+.drawer-bg {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.42);
+    backdrop-filter: blur(4px);
+    z-index: 60;
+    cursor: pointer;
+}
+.drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(520px, 92vw);
+    background: var(--bone-card-bg);
+    border-left: 1px solid var(--bone-card-line);
+    z-index: 61;
+    overflow-y: auto;
+    padding: clamp(18px, 2.4vw, 28px);
+    color: var(--ink);
+    box-shadow: -20px 0 40px rgba(0, 0, 0, 0.22);
+    backdrop-filter: blur(8px);
+}
+.drawer-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--pad-2);
+    margin-bottom: var(--pad-3);
+    padding-bottom: var(--pad-2);
+    border-bottom: 1px solid var(--line);
+}
+.drawer-head h3 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: var(--t-xl);
+    font-weight: 400;
+    letter-spacing: -0.005em;
+}
+.drawer-body { display: block; }
+.drawer-foot {
+    display: flex;
+    gap: var(--pad-2);
+    margin-top: var(--pad-3);
+    padding-top: var(--pad-2);
+    border-top: 1px solid var(--line);
+}
+.icon-btn {
+    background: transparent;
+    border: 0;
+    color: var(--ink-3);
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+}
+.icon-btn:hover { color: var(--ink); background: rgba(14, 15, 12, 0.05); }
+
+/* ---------- Focus surface (topics_card + goals_card live in bone-cards) ---------- */
+.two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(16px, 2vw, 24px);
+    align-items: start;
+}
+@media (max-width: 900px) {
+    .two-col { grid-template-columns: 1fr; }
+}
+
+/* Topics */
+.topics-grid {
+    display: grid;
+    gap: var(--pad-3);
+}
+.topic-group { padding: var(--pad-2) 0; border-top: 1px solid var(--line-soft); }
+.topic-group:first-child { padding-top: 0; border-top: 0; }
+.topic-group-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+.topic-group-label {
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-3);
+}
+.topic-group-count {
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    color: var(--ink-4);
+}
+.topic-list { display: flex; flex-direction: column; gap: 4px; }
+.topic {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--pad-2);
+    padding: 4px 0;
+}
+.topic-name { color: var(--ink); font-size: var(--t-base); }
+.topic-meta {
+    color: var(--ink-4);
+    font-size: var(--t-xs);
+    font-family: var(--font-mono);
+}
+
+/* Goals */
+.goal {
+    padding: var(--pad-2) 0;
+    border-top: 1px solid var(--line-soft);
+}
+.goal:first-child { padding-top: 0; border-top: 0; }
+.goal-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--pad-2);
+    margin-bottom: 6px;
+}
+.goal-title {
+    color: var(--ink);
+    font-size: var(--t-base);
+    font-weight: 500;
+}
+.goal-count { font-family: var(--font-mono); font-size: var(--t-sm); color: var(--ink-3); }
+.goal-count .num  { color: var(--ink); }
+.goal-bar {
+    position: relative;
+    height: 6px;
+    background: var(--line-soft);
+    border-radius: 999px;
+    overflow: hidden;
+    margin: 6px 0;
+}
+.goal-bar-fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    height: 100%;
+    border-radius: 999px;
+    background: var(--accent);
+    transition: width 240ms ease;
+}
+.goal-bar-fill[data-status="ahead"]  { background: var(--ok); }
+.goal-bar-fill[data-status="on"]     { background: var(--accent); }
+.goal-bar-fill[data-status="behind"] { background: var(--warn); }
+.goal-bar-mark {
+    position: absolute;
+    top: -3px;
+    bottom: -3px;
+    width: 2px;
+    background: rgba(14, 15, 12, 0.42);
+    transform: translateX(-1px);
+}
+.goal-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--pad-2);
+    margin-top: 4px;
+    font-size: var(--t-xs);
+}
+.goal-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-family: var(--font-mono);
+}
+.goal-status[data-status="ahead"]  { color: var(--ok); }
+.goal-status[data-status="on"]     { color: var(--ink-2); }
+.goal-status[data-status="behind"] { color: var(--warn); }
+.goal-status-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+}
+.goal-empty {
+    color: var(--ink-4);
+    font-size: var(--t-sm);
+    padding: var(--pad-2) 0;
+}
+
+/* ---------- Admin landing grid + weekly events grid ---------- */
+.admin-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: var(--pad-3);
+}
+.admin-card {
+    display: block;
+    padding: var(--pad-3);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    background: var(--bg-elev);
+    color: inherit;
+    text-decoration: none;
+    transition: border-color 120ms ease, transform 120ms ease;
+}
+.admin-card:hover {
+    border-color: var(--line-strong);
+    transform: translateY(-1px);
+}
+.admin-card .card-head { margin-bottom: 6px; }
+.weekly-grid { display: grid; gap: var(--pad-3); }
+
+/* ---------- Btn alignment fixups (used in page-hero meta + admin row-actions) ---------- */
+.btn-sm {
+    padding: 4px 10px;
+    font-size: var(--t-xs);
+    border-radius: 999px;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 900px) {
+    .region .rail-label { display: none; }
+}
+@media (max-width: 780px) {
+    .hero-foot {
+        grid-template-columns: 1fr;
+        gap: 22px;
+    }
+    .hero-stats { justify-self: start; }
+    .hero-cta { justify-self: start; align-items: flex-start; }
+    .page-hero { align-items: flex-start; }
+    .page-hero-meta { width: 100%; }
+}
+@media (max-width: 520px) {
+    .logo .name { display: none; }
+    .avatar { width: 22px; height: 22px; }
+    .rail-label { display: none; }
+    .divider-v { height: 14px; margin: 0 3px; }
+    .divider-h { width:  14px; margin: 3px 0; }
+    .hero-head .meta { display: none; }
+    .hero-strip { grid-template-columns: 1fr; }
+    .hero-strip .strip-cell-next { justify-content: flex-start; text-align: left; }
+    .hero-title { max-width: 14ch; }
+    .page-hero h1.display-serif { font-size: clamp(28px, 8vw, 40px); }
+    .bone-card { padding: 16px; border-radius: var(--radius-sm); }
+}
+
+/* ---------- Phase H: login (minimal frame, form-as-hero) ---------- */
+.avatar.avatar-anon {
+    background: linear-gradient(135deg, rgba(123, 138, 94, 0.55), rgba(62, 74, 45, 0.65));
+    border-color: rgba(245, 242, 234, 0.30);
+}
+.login-body .workspace {
+    display: grid;
+    place-items: center;
+    padding: clamp(20px, 4vw, 48px);
+}
+.login-hero {
+    width: 100%;
+    max-width: 460px;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(20px, 3vw, 32px);
+    color: var(--rail-fg);
+}
+.login-hero-head {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.login-hero-head .eyebrow {
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    letter-spacing: var(--tracking-eyebrow);
+    color: var(--rail-fg-dim);
+}
+.login-hero-head h1.display-serif {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(40px, 7vw, 72px);
+    line-height: 1.0;
+    letter-spacing: -0.015em;
+    color: var(--rail-fg);
+    text-shadow: 0 2px 30px rgba(0, 0, 0, 0.45);
+}
+.login-hero-head h1.display-serif em {
+    font-style: italic;
+    color: rgba(245, 242, 234, 0.78);
+}
+.login-hero-sub {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--t-xs);
+    letter-spacing: var(--tracking-eyebrow);
+    text-transform: uppercase;
+    color: var(--rail-fg-dim);
+}
+.login-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--pad-3);
+}
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--pad-3);
+}
+.login-error {
+    background: var(--bad-soft);
+    border: 1px solid var(--bad);
+    color: var(--ink);
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    font-size: var(--t-sm);
+}
+.login-submit {
+    margin-top: 4px;
+    align-self: stretch;
+    text-align: center;
+}
+@media (max-width: 520px) {
+    .login-hero-head h1.display-serif { font-size: clamp(36px, 11vw, 56px); }
+    .login-card { padding: 16px; }
+}
+
+/* ---------- Magazine hero per-event checklist (Phase H+) ---------- */
+.hero-items {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-width: 44ch;
+}
+.hero-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(245, 242, 234, 0.10);
+}
+.hero-item:last-child { border-bottom: 0; }
+.hero-item-check {
+    flex: 0 0 auto;
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    background: rgba(245, 242, 234, 0.08);
+    border: 1px solid rgba(245, 242, 234, 0.45);
+    color: var(--bone);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.08s ease;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+.hero-item-check svg { opacity: 0; transition: opacity 0.15s ease; }
+.hero-item-check:hover { background: rgba(245, 242, 234, 0.16); border-color: rgba(245, 242, 234, 0.65); }
+.hero-item-check:active { transform: scale(0.92); }
+.hero-item-check:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.hero-item.done .hero-item-check {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+.hero-item.done .hero-item-check svg { opacity: 1; }
+.hero-item-title {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(18px, 2.2vw, 22px);
+    line-height: 1.25;
+    color: var(--bone);
+    letter-spacing: -0.005em;
+    transition: opacity 0.2s ease;
+}
+.hero-item.done .hero-item-title {
+    opacity: 0.55;
+    text-decoration: line-through;
+    text-decoration-color: rgba(245, 242, 234, 0.4);
+    text-decoration-thickness: 1px;
+}
+.hero-cta.htmx-swapping,
+.hero-foot.htmx-swapping { opacity: 0.55; }
+
+/* ================================================================
+   Card-interior overrides for dark-glass surfaces
+   Applies to .bone-card (all non-Dashboard surfaces + login) and
+   .drawer (admin htmx form drawer) which share --bone-card-bg.
+   Photo-overlay aesthetic: cream text + cream-translucent chrome
+   over the darkened glass region.
+   ================================================================ */
+
+.drawer { color: var(--bone); }
+
+/* --- Dim text (replaces --ink-3 reads inside cards/drawer) --- */
+.bone-card .meta,
+.bone-card .field-help,
+.bone-card .goal-count,
+.bone-card .goal-meta,
+.bone-card .goal-status,
+.bone-card .goal-empty,
+.bone-card .topic-meta,
+.bone-card .topic-group-label,
+.bone-card .topic-group-count,
+.bone-card .den,
+.drawer .meta,
+.drawer .field-help,
+.drawer .den {
+    color: rgba(245, 242, 234, 0.72);
+}
+.bone-card .goal-count .num,
+.bone-card .card-head h2,
+.bone-card .card-head h3,
+.bone-card .goal-title { color: var(--bone); }
+
+/* --- Tables (admin surfaces) --- */
+.bone-card thead th,
+.drawer thead th {
+    color: rgba(245, 242, 234, 0.72);
+    border-bottom-color: rgba(245, 242, 234, 0.20);
+}
+.bone-card tbody td,
+.bone-card tbody tr,
+.drawer tbody td,
+.drawer tbody tr {
+    border-color: rgba(245, 242, 234, 0.10);
+}
+.bone-card tbody tr:hover,
+.drawer tbody tr:hover {
+    background: rgba(245, 242, 234, 0.06);
+}
+
+/* --- Hairline dividers between flattened partials & sections --- */
+.bone-card .kpi-card { border-right-color: rgba(245, 242, 234, 0.12); }
+.bone-card .breakdown-card + .breakdown-card { border-left-color: rgba(245, 242, 234, 0.12); }
+.bone-card .topic-group + .topic-group { border-top-color: rgba(245, 242, 234, 0.12); }
+.bone-card .topic + .topic { border-top-color: rgba(245, 242, 234, 0.08); }
+.bone-card .card-head { border-bottom-color: rgba(245, 242, 234, 0.14); }
+.drawer-head,
+.drawer-foot { border-color: rgba(245, 242, 234, 0.14); }
+
+/* --- Form inputs (login + admin drawer) --- */
+.bone-card .field input[type="text"],
+.bone-card .field input[type="email"],
+.bone-card .field input[type="password"],
+.bone-card .field input[type="number"],
+.bone-card .field input[type="date"],
+.bone-card .field input[type="time"],
+.bone-card .field input[type="search"],
+.bone-card .field select,
+.bone-card .field textarea,
+.drawer .field input[type="text"],
+.drawer .field input[type="email"],
+.drawer .field input[type="password"],
+.drawer .field input[type="number"],
+.drawer .field input[type="date"],
+.drawer .field input[type="time"],
+.drawer .field input[type="search"],
+.drawer .field select,
+.drawer .field textarea {
+    background: rgba(245, 242, 234, 0.08);
+    color: var(--bone);
+    border-color: rgba(245, 242, 234, 0.22);
+}
+.bone-card .field input::placeholder,
+.bone-card .field textarea::placeholder,
+.drawer .field input::placeholder,
+.drawer .field textarea::placeholder {
+    color: rgba(245, 242, 234, 0.45);
+}
+.bone-card .field input:focus,
+.bone-card .field select:focus,
+.bone-card .field textarea:focus,
+.drawer .field input:focus,
+.drawer .field select:focus,
+.drawer .field textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(123, 138, 94, 0.45);
+}
+.bone-card .field-label,
+.drawer .field-label {
+    color: rgba(245, 242, 234, 0.85);
+}
+
+/* --- Form & login error states (lifted for legibility on dark) --- */
+.bone-card .field-error,
+.drawer .field-error { color: #ff8b8b; }
+.bone-card .form-error,
+.drawer .form-error,
+.bone-card .login-error {
+    background: rgba(200, 62, 62, 0.22);
+    border-color: rgba(255, 139, 139, 0.65);
+    color: #ff8b8b;
+}
+
+/* --- Buttons --- */
+.bone-card .btn-ghost {
+    background: rgba(245, 242, 234, 0.18);
+    border-color: rgba(245, 242, 234, 0.55);
+}
+.bone-card .btn-ghost:hover {
+    background: rgba(245, 242, 234, 0.26);
+    border-color: rgba(245, 242, 234, 0.7);
+}
+.drawer .btn-ghost { border-color: rgba(245, 242, 234, 0.55); }
+.bone-card .icon-btn,
+.drawer .icon-btn { color: rgba(245, 242, 234, 0.72); }
+.bone-card .icon-btn:hover,
+.drawer .icon-btn:hover {
+    color: var(--bone);
+    background: rgba(245, 242, 234, 0.10);
+}
+
+/* --- Goal progress bar --- */
+.bone-card .goal-bar { background: rgba(245, 242, 234, 0.12); }
+.bone-card .goal-bar-mark { background: rgba(245, 242, 234, 0.55); }
+
+/* ==========================================================================
+   View mode — flat dark overlay toggled via [data-view-mode="dim"] on <html>.
+   Sibling of .grain inside .bg; opacity-faded so the toggle isn't jarring.
+   Photo-mode-only — clean Light/Dark hide the entire .bg layer (and the
+   view-mode button itself; see "App mode: clean modes" block below).
+   ========================================================================== */
+.view-dim {
+    position: absolute;
+    inset: 0;
+    background: var(--view-dim);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 240ms ease;
+}
+[data-view-mode="dim"] .view-dim { opacity: 1; }
+
+/* ==========================================================================
+   App mode: clean Light + clean Dark (no photo backdrop).
+   Photo-mode chrome (cream over photo) was hardcoded for over-photo
+   legibility; clean modes need flat-surface treatment.
+   ========================================================================== */
+
+/* Body canvas: photo-mode hardcodes #000 behind the photo (line 34) so the
+   void around the photo edge is solid black. In clean modes there's no
+   photo, so the body bg + base text need to flip to the workspace tokens
+   (var(--bg) + var(--ink)) for a true white-on-black or black-on-white look. */
+:root[data-app-mode="light"],
+:root[data-app-mode="dark"],
+:root[data-app-mode="light"] body,
+:root[data-app-mode="dark"] body {
+    background: var(--bg);
+    color: var(--ink);
+}
+
+/* Hide the full photo layer (photo + grain + view-dim sibling) */
+[data-app-mode="light"] .bg,
+[data-app-mode="dark"] .bg { display: none; }
+
+/* View-mode (dim) toggle is photo-only — hide the rail button in clean modes */
+[data-app-mode="light"] .ib[data-action="view-mode"],
+[data-app-mode="dark"] .ib[data-action="view-mode"] { display: none; }
+
+/* Bone-card flat treatment in clean modes (no blur, no drop-shadow) */
+[data-app-mode="light"] .bone-card,
+[data-app-mode="dark"] .bone-card {
+    backdrop-filter: none;
+    box-shadow: none;
+}
+
+/* Clean Light bone-card surface override: translucent cream → solid bg-elev
+   (white) with the standard hairline border. */
+[data-app-mode="light"] {
+    --bone-card-bg:   var(--bg-elev);
+    --bone-card-line: var(--line);
+}
+
+/* Drop text-shadows on the magazine-style headlines (no photo to read against) */
+[data-app-mode="light"] .hero-title,
+[data-app-mode="light"] .hero-lede,
+[data-app-mode="light"] .page-hero h1.display-serif,
+[data-app-mode="light"] .login-hero-head h1.display-serif,
+[data-app-mode="dark"] .hero-title,
+[data-app-mode="dark"] .hero-lede,
+[data-app-mode="dark"] .page-hero h1.display-serif,
+[data-app-mode="dark"] .login-hero-head h1.display-serif {
+    text-shadow: none;
+}
+
+/* Photo + Dark — flip the right-side nav drawer (.menu-drawer) to a dark
+   surface with cream text. Default drawer is cream-on-ink (designed to read
+   as a "paper card" against cream workspaces); against the photo OR the
+   solid-dark Dark workspace it pulls too much attention. Dark drawer keeps
+   the eye on the workspace and matches the chrome. Light app mode keeps
+   the existing paper-card drawer (cream reads fine on the white workspace). */
+[data-app-mode="photo"] .menu-drawer,
+[data-app-mode="dark"] .menu-drawer {
+    background: rgba(14, 15, 12, 0.92);
+    border-left-color: rgba(245, 242, 234, 0.10);
+    color: var(--bone);
+}
+[data-app-mode="photo"] .menu-head,
+[data-app-mode="dark"] .menu-head { border-bottom-color: rgba(245, 242, 234, 0.10); }
+[data-app-mode="photo"] .menu-head .eyebrow,
+[data-app-mode="dark"] .menu-head .eyebrow { color: rgba(245, 242, 234, 0.55); }
+[data-app-mode="photo"] .menu-close,
+[data-app-mode="dark"] .menu-close {
+    border-color: rgba(245, 242, 234, 0.20);
+    color: var(--bone);
+}
+[data-app-mode="photo"] .menu-close:hover,
+[data-app-mode="dark"] .menu-close:hover { background: rgba(245, 242, 234, 0.08); }
+[data-app-mode="photo"] .acc-item,
+[data-app-mode="dark"] .acc-item { border-bottom-color: rgba(245, 242, 234, 0.10); }
+[data-app-mode="photo"] .acc-trigger,
+[data-app-mode="dark"] .acc-trigger { color: var(--bone); }
+[data-app-mode="photo"] .acc-trigger:hover,
+[data-app-mode="dark"] .acc-trigger:hover { background: rgba(245, 242, 234, 0.05); }
+[data-app-mode="photo"] .acc-trigger .ic,
+[data-app-mode="dark"] .acc-trigger .ic   { color: rgba(245, 242, 234, 0.75); }
+[data-app-mode="photo"] .acc-trigger .meta,
+[data-app-mode="dark"] .acc-trigger .meta { color: rgba(245, 242, 234, 0.50); }
+[data-app-mode="photo"] .acc-trigger .chev,
+[data-app-mode="dark"] .acc-trigger .chev { color: rgba(245, 242, 234, 0.55); }
+[data-app-mode="photo"] .acc-item.open .acc-trigger,
+[data-app-mode="dark"] .acc-item.open .acc-trigger { background: rgba(245, 242, 234, 0.05); }
+[data-app-mode="photo"] .acc-panel a,
+[data-app-mode="dark"] .acc-panel a { color: rgba(245, 242, 234, 0.78); }
+[data-app-mode="photo"] .acc-panel a:hover,
+[data-app-mode="dark"] .acc-panel a:hover {
+    background: rgba(245, 242, 234, 0.07);
+    color: var(--bone);
+}
+[data-app-mode="photo"] .acc-panel a .tag,
+[data-app-mode="dark"] .acc-panel a .tag { color: rgba(245, 242, 234, 0.50); }
+[data-app-mode="photo"] .menu-foot,
+[data-app-mode="dark"] .menu-foot {
+    border-top-color: rgba(245, 242, 234, 0.10);
+    color: rgba(245, 242, 234, 0.55);
+}
+[data-app-mode="photo"] .menu-foot a,
+[data-app-mode="dark"] .menu-foot a {
+    color: var(--bone);
+    border-bottom-color: rgba(245, 242, 234, 0.30);
+}
+
+/* Clean Light — flip the TR app-drawer (Workspace / All apps) to a paper
+   surface with ink text. Default app-drawer is dark cream-on-ink (cohesive
+   over photo); against the white workspace it sits as an unwanted dark
+   slab. Photo + Dark modes keep the existing dark drawer. */
+[data-app-mode="light"] .app-drawer {
+    background: rgba(245, 242, 234, 0.98);
+    border-left-color: rgba(14, 15, 12, 0.10);
+    color: var(--ink);
+}
+[data-app-mode="light"] .app-drawer .drawer-head { border-bottom-color: rgba(14, 15, 12, 0.08); }
+[data-app-mode="light"] .app-drawer .drawer-head .eyebrow { color: rgba(14, 15, 12, 0.50); }
+[data-app-mode="light"] .app-drawer .drawer-close {
+    border-color: rgba(14, 15, 12, 0.15);
+    color: var(--ink);
+}
+[data-app-mode="light"] .app-drawer .drawer-close:hover { background: rgba(14, 15, 12, 0.06); }
+[data-app-mode="light"] .app-drawer .drawer-section h6 { color: rgba(14, 15, 12, 0.45); }
+[data-app-mode="light"] .app-tile { color: var(--ink); }
+[data-app-mode="light"] .app-tile:hover {
+    background: rgba(14, 15, 12, 0.04);
+    border-color: rgba(14, 15, 12, 0.10);
+}
+[data-app-mode="light"] .app-tile .glyph {
+    background: rgba(14, 15, 12, 0.06);
+    border-color: rgba(14, 15, 12, 0.12);
+    color: var(--ink);
+}
+[data-app-mode="light"] .app-tile .lbl { color: rgba(14, 15, 12, 0.75); }
+[data-app-mode="light"] .app-drawer .drawer-foot {
+    border-top-color: rgba(14, 15, 12, 0.08);
+    color: rgba(14, 15, 12, 0.50);
+}
+[data-app-mode="light"] .app-drawer .drawer-foot a {
+    color: rgba(14, 15, 12, 0.78);
+    border-bottom-color: rgba(14, 15, 12, 0.25);
+}
+[data-app-mode="light"] .app-drawer .drawer-foot a:hover { color: var(--ink); }
+
+/* Clean Light only — over-photo cream type flips to ink (near-black on white).
+   Clean Dark keeps cream because --ink is already cream in the dark token block,
+   and the workspace bg is solid dark — same contrast story as cream-over-photo. */
+[data-app-mode="light"] .hero,
+[data-app-mode="light"] .hero-title,
+[data-app-mode="light"] .hero-title em,
+[data-app-mode="light"] .hero-head .eyebrow,
+[data-app-mode="light"] .hero-head .meta .num,
+[data-app-mode="light"] .hero-lede,
+[data-app-mode="light"] .hero-lede .num,
+[data-app-mode="light"] .hero-stats .stat .n,
+[data-app-mode="light"] .hero-item-title,
+[data-app-mode="light"] .hero-strip .strip-time,
+[data-app-mode="light"] .hero-strip .strip-title,
+[data-app-mode="light"] .page-hero h1.display-serif,
+[data-app-mode="light"] .page-hero .eyebrow,
+[data-app-mode="light"] .page-hero .page-hero-subtitle,
+[data-app-mode="light"] .page-hero-meta .num,
+[data-app-mode="light"] .login-hero,
+[data-app-mode="light"] .login-hero-head h1,
+[data-app-mode="light"] .login-hero-head h1 em,
+[data-app-mode="light"] .login-hero-head .eyebrow,
+[data-app-mode="light"] .login-hero-sub {
+    color: var(--ink);
+}
+
+/* Clean Light — translucent cream chrome flips to translucent ink so the
+   per-event checklist rows + the prev/next strip read against the white
+   workspace. Mirrors the cream rgba opacities used in photo/dark mode. */
+[data-app-mode="light"] .hero-item { border-bottom-color: rgba(14, 15, 12, 0.10); }
+[data-app-mode="light"] .hero-item-check {
+    background: rgba(14, 15, 12, 0.04);
+    border-color: rgba(14, 15, 12, 0.30);
+    color: var(--ink);
+}
+[data-app-mode="light"] .hero-item-check:hover {
+    background: rgba(14, 15, 12, 0.08);
+    border-color: rgba(14, 15, 12, 0.50);
+}
+[data-app-mode="light"] .hero-item.done .hero-item-title {
+    text-decoration-color: rgba(14, 15, 12, 0.40);
+}
+[data-app-mode="light"] .hero-strip {
+    border-top-color: rgba(14, 15, 12, 0.18);
+    color: rgba(14, 15, 12, 0.85);
+}
+[data-app-mode="light"] .hero-strip .strip-label { color: rgba(14, 15, 12, 0.55); }
+[data-app-mode="light"] .hero-strip .strip-empty { color: rgba(14, 15, 12, 0.40); }
+[data-app-mode="light"] .hero-stats .stat .l       { color: rgba(14, 15, 12, 0.70); }
+
+/* ==========================================================================
+   App mode: light — re-assert ink colors inside .bone-card
+   The L1941–2065 dark-glass block forces cream text. In light mode the
+   bone-card surface flips to #fff (white) so cream-on-white is invisible.
+   These overrides restore ink-token reads on a per-class basis.
+   ========================================================================== */
+[data-app-mode="light"] .bone-card .meta,
+[data-app-mode="light"] .bone-card .field-help,
+[data-app-mode="light"] .bone-card .goal-count,
+[data-app-mode="light"] .bone-card .goal-meta,
+[data-app-mode="light"] .bone-card .goal-empty,
+[data-app-mode="light"] .bone-card .topic-meta,
+[data-app-mode="light"] .bone-card .topic-group-label,
+[data-app-mode="light"] .bone-card .topic-group-count,
+[data-app-mode="light"] .bone-card .den {
+    color: var(--ink-4);
+}
+[data-app-mode="light"] .bone-card .goal-count .num,
+[data-app-mode="light"] .bone-card .card-head h2,
+[data-app-mode="light"] .bone-card .card-head h3,
+[data-app-mode="light"] .bone-card .goal-title {
+    color: var(--ink);
+}
+
+/* Goal status — restore the colored [data-status] variants (the L1956
+   bone-card cream override clobbers .goal-status[data-status="…"] from
+   L1726–1728). Specificity 0,0,3,1 beats the dark-glass override in
+   light mode. */
+[data-app-mode="light"] .bone-card .goal-status                       { color: var(--ink-4); }
+[data-app-mode="light"] .bone-card .goal-status[data-status="ahead"]  { color: var(--ok); }
+[data-app-mode="light"] .bone-card .goal-status[data-status="on"]     { color: var(--ink-2); }
+[data-app-mode="light"] .bone-card .goal-status[data-status="behind"] { color: var(--warn); }
+
+/* Hairline dividers — the cream-rgba L1990–1994 dividers vanish on white;
+   re-assert with ink-rgba so flattened partials stay visually separated */
+[data-app-mode="light"] .bone-card .topic-group + .topic-group { border-top-color: rgba(14, 15, 12, 0.10); }
+[data-app-mode="light"] .bone-card .topic + .topic             { border-top-color: rgba(14, 15, 12, 0.06); }
+[data-app-mode="light"] .bone-card .card-head                  { border-bottom-color: rgba(14, 15, 12, 0.12); }
+[data-app-mode="light"] .bone-card .kpi-card                   { border-right-color: rgba(14, 15, 12, 0.10); }
+[data-app-mode="light"] .bone-card .breakdown-card + .breakdown-card { border-left-color: rgba(14, 15, 12, 0.10); }
+[data-app-mode="light"] .bone-card .goal-bar      { background: rgba(14, 15, 12, 0.08); }
+[data-app-mode="light"] .bone-card .goal-bar-mark { background: rgba(14, 15, 12, 0.32); }
+
+/* ==========================================================================
+   App mode: light — re-assert ink colors inside .drawer (admin htmx form)
+   --bone-card-bg stays at rgb(0 0 0 / 0.21) in light mode, which renders
+   as a light-grey overlay on the white workspace. The L1949–2065 dark-glass
+   block then forces cream text + cream-translucent inputs, leaving form
+   content unreadable. These overrides mirror the bone-card light pattern.
+   ========================================================================== */
+[data-app-mode="light"] .drawer { color: var(--ink); }
+
+[data-app-mode="light"] .drawer .meta,
+[data-app-mode="light"] .drawer .field-help,
+[data-app-mode="light"] .drawer .den {
+    color: var(--ink-4);
+}
+[data-app-mode="light"] .drawer .field-label { color: var(--ink-2); }
+
+[data-app-mode="light"] .drawer .field input[type="text"],
+[data-app-mode="light"] .drawer .field input[type="email"],
+[data-app-mode="light"] .drawer .field input[type="password"],
+[data-app-mode="light"] .drawer .field input[type="number"],
+[data-app-mode="light"] .drawer .field input[type="date"],
+[data-app-mode="light"] .drawer .field input[type="time"],
+[data-app-mode="light"] .drawer .field input[type="search"],
+[data-app-mode="light"] .drawer .field select,
+[data-app-mode="light"] .drawer .field textarea {
+    background: var(--bg-elev);
+    color: var(--ink);
+    border-color: var(--line);
+}
+[data-app-mode="light"] .drawer .field input::placeholder,
+[data-app-mode="light"] .drawer .field textarea::placeholder {
+    color: var(--ink-4);
+}
+
+[data-app-mode="light"] .drawer-head,
+[data-app-mode="light"] .drawer-foot { border-color: var(--line); }
+
+[data-app-mode="light"] .drawer thead th {
+    color: var(--ink-4);
+    border-bottom-color: var(--line);
+}
+[data-app-mode="light"] .drawer tbody td,
+[data-app-mode="light"] .drawer tbody tr { border-color: var(--line-soft); }
+[data-app-mode="light"] .drawer tbody tr:hover { background: rgba(14, 15, 12, 0.04); }
+
+[data-app-mode="light"] .drawer .btn { color: var(--ink); }
+[data-app-mode="light"] .drawer .btn-ghost {
+    background: rgba(14, 15, 12, 0.04);
+    color: var(--ink);
+    border-color: var(--line-strong);
+}
+[data-app-mode="light"] .drawer .btn-ghost:hover {
+    background: rgba(14, 15, 12, 0.08);
+    border-color: var(--line-strong);
+}
+[data-app-mode="light"] .drawer .icon-btn { color: var(--ink-3); }
+[data-app-mode="light"] .drawer .icon-btn:hover {
+    color: var(--ink);
+    background: rgba(14, 15, 12, 0.06);
+}
+
+[data-app-mode="light"] .drawer .field-error { color: var(--bad); }
+[data-app-mode="light"] .drawer .form-error {
+    background: var(--bad-soft);
+    border-color: var(--bad);
+    color: var(--bad);
+}
+
+/* ==========================================================================
+   App mode: light — page-hero band + standalone .btn-ghost
+   .page-hero L1300-1338 sets cream borders + cream meta body; the L2244+
+   block flips only h1/eyebrow/subtitle/.num. The container border + meta
+   body text + .btn-ghost (used by "+ New X" hero-action buttons over the
+   white workspace) need separate overrides.
+   ========================================================================== */
+[data-app-mode="light"] .page-hero        { border-bottom-color: var(--line); }
+[data-app-mode="light"] .page-hero-meta   { color: var(--ink-3); }
+
+[data-app-mode="light"] .btn-ghost {
+    background: rgba(14, 15, 12, 0.04);
+    color: var(--ink);
+    border-color: var(--line-strong);
+}
+[data-app-mode="light"] .btn-ghost:hover {
+    background: rgba(14, 15, 12, 0.08);
+    border-color: var(--line-strong);
+}
+
+/* ==========================================================================
+   App mode: light — re-assert ink chrome inside .bone-card (table + button +
+   form input). The L2286-2321 block covers meta/headings/dividers; this
+   block mirrors the L2330+ drawer treatment for the remaining cream chrome.
+   ========================================================================== */
+[data-app-mode="light"] .bone-card { color: var(--ink); }
+
+[data-app-mode="light"] .bone-card thead th {
+    color: var(--ink-4);
+    border-bottom-color: var(--line);
+}
+[data-app-mode="light"] .bone-card tbody td,
+[data-app-mode="light"] .bone-card tbody tr { border-color: var(--line-soft); }
+[data-app-mode="light"] .bone-card tbody tr:hover td { background: rgba(14, 15, 12, 0.04); }
+
+[data-app-mode="light"] .bone-card .field-label { color: var(--ink-2); }
+[data-app-mode="light"] .bone-card .field input[type="text"],
+[data-app-mode="light"] .bone-card .field input[type="email"],
+[data-app-mode="light"] .bone-card .field input[type="password"],
+[data-app-mode="light"] .bone-card .field input[type="number"],
+[data-app-mode="light"] .bone-card .field input[type="date"],
+[data-app-mode="light"] .bone-card .field input[type="time"],
+[data-app-mode="light"] .bone-card .field input[type="search"],
+[data-app-mode="light"] .bone-card .field select,
+[data-app-mode="light"] .bone-card .field textarea {
+    background: var(--bg-elev);
+    color: var(--ink);
+    border-color: var(--line);
+}
+[data-app-mode="light"] .bone-card .field input::placeholder,
+[data-app-mode="light"] .bone-card .field textarea::placeholder {
+    color: var(--ink-4);
+}
+
+[data-app-mode="light"] .bone-card .icon-btn { color: var(--ink-3); }
+[data-app-mode="light"] .bone-card .icon-btn:hover {
+    color: var(--ink);
+    background: rgba(14, 15, 12, 0.06);
+}
+
+[data-app-mode="light"] .bone-card .btn-ghost {
+    background: rgba(14, 15, 12, 0.06);
+    border-color: rgba(14, 15, 12, 0.32);
+}
+[data-app-mode="light"] .bone-card .btn-ghost:hover {
+    background: rgba(14, 15, 12, 0.10);
+    border-color: rgba(14, 15, 12, 0.42);
+}
+
+[data-app-mode="light"] .bone-card .field-error { color: var(--bad); }
+[data-app-mode="light"] .bone-card .form-error,
+[data-app-mode="light"] .bone-card .login-error {
+    background: var(--bad-soft);
+    border-color: var(--bad);
+    color: var(--bad);
+}
+
+/* ==========================================================================
+   App mode: photo — .topic-name reads cream over dark glass
+   .topic-name is missing from the L1967–1970 bone-card cream list; in photo
+   mode --ink is near-black, so topic names render as dark-on-dark-photo.
+   No override needed in dark mode (--ink already flips to bone).
+   ========================================================================== */
+[data-app-mode="photo"] .bone-card .topic-name { color: var(--bone); }
+
+/* ==========================================================================
+   Fullscreen-PWA + safe-area: keep the frame off notches / dynamic islands
+   when the app is launched as an installed PWA (display_override: fullscreen)
+   on devices with hardware cutouts. max() preserves the existing inset on
+   devices without cutouts.
+   ========================================================================== */
+@supports (padding: env(safe-area-inset-top)) {
+    .app {
+        padding-top:    max(var(--frame-inset), env(safe-area-inset-top));
+        padding-right:  max(var(--frame-inset), env(safe-area-inset-right));
+        padding-bottom: max(var(--frame-inset), env(safe-area-inset-bottom));
+        padding-left:   max(var(--frame-inset), env(safe-area-inset-left));
+    }
+    .frame {
+        top:    max(var(--frame-inset), env(safe-area-inset-top));
+        right:  max(var(--frame-inset), env(safe-area-inset-right));
+        bottom: max(var(--frame-inset), env(safe-area-inset-bottom));
+        left:   max(var(--frame-inset), env(safe-area-inset-left));
+    }
+}
+
+/* ==========================================================================
+   Pull-to-refresh — bound to .workspace by pull-to-refresh.js. Indicator
+   lives inside .workspace as the first child; absolute-positioned at the
+   top-center, hidden above the viewport edge until JS translates it down
+   in response to a touch pull.
+   ========================================================================== */
+.workspace {
+    /* Suppress iOS Safari's native bounce so PTR owns the gesture. Also
+       prevents the chrome-android browser PTR from competing (moot when
+       installed as a PWA, but matters during in-browser testing). */
+    overscroll-behavior-y: contain;
+}
+
+.ptr-indicator {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 36px;
+    height: 36px;
+    transform: translate3d(-50%, -150%, 0);
+    background: var(--bone-card-bg);
+    border: 1px solid var(--bone-card-line);
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 5;
+    opacity: var(--ptr-progress, 0);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    transition: transform 0.24s cubic-bezier(0.2, 0.7, 0.3, 1),
+                opacity 0.24s ease,
+                border-color 0.15s ease;
+    will-change: transform, opacity;
+}
+/* During an active touch-pull, drop transitions so the indicator tracks
+   the finger 1:1. Re-enabled on release so snap-back animates. */
+.ptr-indicator.is-pulling {
+    transition: opacity 0.06s ease, border-color 0.15s ease;
+}
+.ptr-indicator.is-armed {
+    border-color: var(--accent);
+}
+.ptr-indicator.is-refreshing {
+    transform: translate3d(-50%, 28px, 0);
+    opacity: 1;
+}
+.ptr-spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--ink-5);
+    border-top-color: var(--accent);
+    border-radius: 999px;
+    transform: rotate(calc(var(--ptr-progress, 0) * 360deg));
+    transition: transform 0.06s linear;
+}
+.ptr-indicator.is-refreshing .ptr-spinner {
+    animation: ptr-spin 0.7s linear infinite;
+}
+@keyframes ptr-spin {
+    to { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .ptr-indicator { transition: opacity 0.1s ease; }
+    .ptr-indicator.is-refreshing .ptr-spinner { animation: none; }
+}
+
+/* ================================================================
+   Quick-add note modal + dashboard notes list
+   ================================================================ */
+
+/* Modal — extends .stub-modal with a wider card to fit the textarea + actions. */
+.quick-note-modal { max-width: min(480px, 92vw); }
+.quick-note-inner {
+    text-align: left;
+    padding: 24px 22px 20px;
+}
+.quick-note-modal .stub-title { margin-bottom: 14px; }
+.quick-note-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin: 0;
+}
+.quick-note-input {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid rgba(14, 15, 12, 0.18);
+    border-radius: 8px;
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.6);
+    color: var(--ink);
+    font-family: var(--font-display);
+    font-size: 16px;
+    line-height: 1.4;
+    resize: vertical;
+    min-height: 88px;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+.quick-note-input::placeholder {
+    color: rgba(14, 15, 12, 0.40);
+    font-style: italic;
+}
+.quick-note-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: #fff;
+}
+.quick-note-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+}
+.quick-note-cancel {
+    background: transparent;
+    color: rgba(14, 15, 12, 0.65);
+    border: 1px solid rgba(14, 15, 12, 0.18);
+}
+.quick-note-cancel:hover {
+    background: rgba(14, 15, 12, 0.05);
+    color: var(--ink);
+}
+.quick-note-save {
+    background: var(--accent);
+    color: var(--accent-ink);
+    border: 0;
+    padding: 9px 18px;
+    border-radius: 8px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+.quick-note-save:hover { background: var(--accent-hover); }
+
+/* Dashboard list — sits inside .hero-center after .hero-items. Container is
+   always rendered (stable htmx swap target) but collapses to no space when empty. */
+.hero-notes {
+    margin-top: 4px;
+    max-width: 44ch;
+}
+.hero-notes[data-empty="true"] { display: none; }
+.hero-notes-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.hero-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 4px 0;
+    border-top: 1px dashed rgba(245, 242, 234, 0.14);
+}
+.hero-note:first-child { border-top: 0; }
+.hero-note-text {
+    flex: 1 1 auto;
+    font-family: var(--font-display);
+    font-size: clamp(15px, 1.6vw, 17px);
+    line-height: 1.35;
+    color: var(--bone);
+    letter-spacing: -0.005em;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+.hero-note-del {
+    flex: 0 0 auto;
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    background: rgba(245, 242, 234, 0.06);
+    border: 1px solid rgba(245, 242, 234, 0.30);
+    color: var(--bone);
+    font-family: var(--font-mono);
+    font-size: 14px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    opacity: 0.6;
+    transition: opacity 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+.hero-note:hover .hero-note-del,
+.hero-note-del:focus-visible { opacity: 1; }
+.hero-note-del:hover {
+    background: rgba(200, 62, 62, 0.18);
+    border-color: rgba(200, 62, 62, 0.55);
+}
+.hero-note-del:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.hero-notes.htmx-swapping { opacity: 0.55; }
+
+/* Light-mode chrome adjustments for the dashboard notes list (no photo backdrop
+   means the cream-on-cream tokens above lose contrast). */
+[data-app-mode="light"] .hero-note {
+    border-top-color: rgba(14, 15, 12, 0.12);
+}
+[data-app-mode="light"] .hero-note-text {
+    color: var(--ink);
+}
+[data-app-mode="light"] .hero-note-del {
+    background: rgba(14, 15, 12, 0.04);
+    border-color: rgba(14, 15, 12, 0.18);
+    color: rgba(14, 15, 12, 0.65);
+}
+[data-app-mode="light"] .hero-note-del:hover {
+    background: rgba(200, 62, 62, 0.10);
+    border-color: rgba(200, 62, 62, 0.45);
+    color: var(--bad);
+}

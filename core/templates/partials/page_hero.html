@@ -1,0 +1,12 @@
+<header class="page-hero">
+    <div class="page-hero-headline">
+        <div class="eyebrow">{{ eyebrow|upper }}</div>
+        <h1 class="display-serif">{{ title|safe }}</h1>
+        {% if subtitle %}
+            <div class="page-hero-subtitle mono">{{ subtitle|safe }}</div>
+        {% endif %}
+    </div>
+    {% if meta %}
+        <div class="page-hero-meta">{{ meta|safe }}</div>
+    {% endif %}
+</header>

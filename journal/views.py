@@ -7,6 +7,7 @@ from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.views import View
 from django.views.generic import ListView
+from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
@@ -14,6 +15,13 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 
 from journal.forms import DailyInventoryForm, GratitudeEntryForm
 from journal.models import DailyInventory, GratitudeEntry
+
+# V003.0 design tokens — same palette as steps/views.py.
+PDF_BONE = colors.HexColor("#f5f2ea")
+PDF_INK = colors.HexColor("#0e0f0c")
+PDF_INK_DIM = colors.HexColor("#5a5a55")
+PDF_ACCENT = colors.HexColor("#2C5F3F")
+PDF_LINE = colors.HexColor("#d8d2c1")
 
 
 class DailyCheckinView(View):
@@ -26,12 +34,16 @@ class DailyCheckinView(View):
         ).first()
         form = DailyInventoryForm(instance=inventory)
         streak = DailyInventory.current_streak(request.user)
+        meta_html = (
+            f'<span class="num">{streak}</span> DAY STREAK' if streak > 0 else ""
+        )
         return render(request, "journal/daily_checkin.html", {
             "form": form,
             "checkin_date": checkin_date,
             "is_today": checkin_date == timezone.now().date(),
             "inventory": inventory,
             "streak": streak,
+            "meta_html": meta_html,
         })
 
     def post(self, request: HttpRequest, date: str | None = None) -> HttpResponse:
@@ -48,12 +60,16 @@ class DailyCheckinView(View):
             messages.success(request, f"Check-in for {checkin_date} saved.")
             return redirect("daily_checkin")
         streak = DailyInventory.current_streak(request.user)
+        meta_html = (
+            f'<span class="num">{streak}</span> DAY STREAK' if streak > 0 else ""
+        )
         return render(request, "journal/daily_checkin.html", {
             "form": form,
             "checkin_date": checkin_date,
             "is_today": checkin_date == timezone.now().date(),
             "inventory": inventory,
             "streak": streak,
+            "meta_html": meta_html,
         })
 
     def _parse_date(self, date_str: str | None) -> datetime.date:
@@ -76,13 +92,20 @@ class JournalHistoryView(ListView):
     def get_queryset(self):
         return DailyInventory.objects.filter(user=self.request.user)
 
+    def get_context_data(self, **kwargs: object) -> dict:
+        context = super().get_context_data(**kwargs)
+        total = DailyInventory.objects.filter(user=self.request.user).count()
+        context["total_count"] = total
+        context["meta_html"] = f'<span class="num">{total}</span> entr{"y" if total == 1 else "ies"}'
+        return context
+
 
 class StreakView(View):
-    """HTMX partial returning the current streak count."""
+    """Streak surface — page-hero + bone-card with display-serif streak count."""
 
     def get(self, request: HttpRequest) -> HttpResponse:
         streak = DailyInventory.current_streak(request.user)
-        return render(request, "journal/partials/streak_widget.html", {
+        return render(request, "journal/streak.html", {
             "streak": streak,
         })
 
@@ -163,7 +186,69 @@ class GratitudeHistoryView(ListView):
         for entry in entries:
             grouped.setdefault(entry.date, []).append(entry)
         context["grouped_entries"] = dict(sorted(grouped.items(), reverse=True))
+        total = GratitudeEntry.objects.filter(user=self.request.user).count()
+        context["total_count"] = total
+        context["meta_html"] = f'<span class="num">{total}</span> entr{"y" if total == 1 else "ies"}'
         return context
+
+
+def _build_journal_pdf_styles() -> dict[str, ParagraphStyle]:
+    """V003.0 palette — bone bg + forest-green serif headings + ink Helvetica body + Courier mono metadata."""
+    styles = getSampleStyleSheet()
+    return {
+        "title": ParagraphStyle(
+            "Title", parent=styles["Heading1"], fontName="Times-Roman",
+            fontSize=22, leading=26, spaceAfter=4, textColor=PDF_ACCENT,
+        ),
+        "subtitle": ParagraphStyle(
+            "Subtitle", parent=styles["Normal"], fontName="Times-Italic",
+            fontSize=12, leading=16, spaceAfter=14, textColor=PDF_INK_DIM,
+        ),
+        "eyebrow": ParagraphStyle(
+            "Eyebrow", parent=styles["Normal"], fontName="Courier",
+            fontSize=8, leading=10, spaceAfter=8, textColor=PDF_INK_DIM,
+        ),
+        "heading": ParagraphStyle(
+            "Heading", parent=styles["Heading2"], fontName="Times-Roman",
+            fontSize=13, leading=16, spaceBefore=8, spaceAfter=4,
+            textColor=PDF_ACCENT,
+        ),
+        "body": ParagraphStyle(
+            "Body", parent=styles["Normal"], fontName="Helvetica",
+            fontSize=10, leading=14, spaceAfter=4, textColor=PDF_INK,
+        ),
+        "label": ParagraphStyle(
+            "Label", parent=styles["Normal"], fontName="Helvetica-Bold",
+            fontSize=10, leading=14, spaceAfter=2, textColor=PDF_INK,
+        ),
+        "meta": ParagraphStyle(
+            "Meta", parent=styles["Normal"], fontName="Courier",
+            fontSize=8, leading=10, spaceAfter=8, textColor=PDF_INK_DIM,
+        ),
+    }
+
+
+def _draw_journal_chrome(canvas, doc, label: str = "PS01 · JOURNAL") -> None:
+    """Page chrome: bone bg + forest-green hairline + Courier eyebrow header + dim Courier footer."""
+    canvas.saveState()
+    canvas.setFillColor(PDF_BONE)
+    canvas.rect(0, 0, doc.pagesize[0], doc.pagesize[1], stroke=0, fill=1)
+    canvas.setStrokeColor(PDF_LINE)
+    canvas.setLineWidth(0.5)
+    rule_y = doc.pagesize[1] - 0.55 * inch
+    canvas.line(0.75 * inch, rule_y, doc.pagesize[0] - 0.75 * inch, rule_y)
+    canvas.setFillColor(PDF_ACCENT)
+    canvas.setFont("Courier-Bold", 8)
+    canvas.drawString(0.75 * inch, doc.pagesize[1] - 0.45 * inch, label.upper())
+    canvas.setFillColor(PDF_INK_DIM)
+    canvas.setFont("Courier", 8)
+    page_num = canvas.getPageNumber()
+    today = datetime.datetime.now().strftime("%Y-%m-%d")
+    canvas.drawRightString(
+        doc.pagesize[0] - 0.75 * inch, 0.45 * inch,
+        f"PAGE {page_num}  ·  EXPORTED {today}",
+    )
+    canvas.restoreState()
 
 
 class JournalExportView(View):
@@ -188,48 +273,50 @@ class JournalExportView(View):
             user=request.user, date__gte=start_date, date__lte=end_date
         ).order_by("-date")
 
-        styles = getSampleStyleSheet()
-        pdf_styles = {
-            "title": ParagraphStyle("Title", parent=styles["Heading1"], fontSize=18, spaceAfter=12),
-            "heading": ParagraphStyle("Heading", parent=styles["Heading2"], fontSize=13, spaceAfter=6),
-            "body": ParagraphStyle("Body", parent=styles["Normal"], fontSize=10, leading=14, spaceAfter=4),
-            "label": ParagraphStyle("Label", parent=styles["Normal"], fontSize=10, fontName="Helvetica-Bold", spaceAfter=2),
-        }
+        pdf_styles = _build_journal_pdf_styles()
 
         buf = io.BytesIO()
         doc = SimpleDocTemplate(
             buf, pagesize=letter,
-            topMargin=0.75 * inch, bottomMargin=0.75 * inch,
+            topMargin=0.95 * inch, bottomMargin=0.75 * inch,
             leftMargin=0.75 * inch, rightMargin=0.75 * inch,
         )
 
+        username = request.user.first_name or request.user.username
         story: list = []
-        story.append(Paragraph("Daily Inventory Journal", pdf_styles["title"]))
         story.append(Paragraph(
-            f"{start_date.strftime('%B %d, %Y')} — {end_date.strftime('%B %d, %Y')}",
-            pdf_styles["body"]
+            f"PS01 · {username.upper()} · DAILY INVENTORY",
+            pdf_styles["eyebrow"],
         ))
-        story.append(Spacer(1, 0.3 * inch))
+        story.append(Paragraph("Daily inventory journal", pdf_styles["title"]))
+        story.append(Paragraph(
+            f"{start_date.strftime('%B %d, %Y')} – {end_date.strftime('%B %d, %Y')}",
+            pdf_styles["subtitle"],
+        ))
+        story.append(Spacer(1, 0.2 * inch))
 
         if not entries:
             story.append(Paragraph("No entries found for this date range.", pdf_styles["body"]))
         else:
             for entry in entries:
                 story.append(Paragraph(
-                    entry.date.strftime("%A, %B %d, %Y"), pdf_styles["heading"]
+                    entry.date.strftime("%A, %B %d, %Y"), pdf_styles["heading"],
                 ))
-                story.append(Paragraph(f"Serenity: {entry.serenity_level}/10 | Mood: {entry.mood}/10", pdf_styles["body"]))
+                story.append(Paragraph(
+                    f"SERENITY {entry.serenity_level}/10  ·  MOOD {entry.mood}/10",
+                    pdf_styles["meta"],
+                ))
 
                 if entry.was_resentful:
-                    story.append(Paragraph("Resentful: Yes", pdf_styles["label"]))
+                    story.append(Paragraph("Resentful: yes", pdf_styles["label"]))
                     if entry.resentful_details:
                         story.append(Paragraph(entry.resentful_details, pdf_styles["body"]))
                 if entry.was_selfish:
-                    story.append(Paragraph("Selfish: Yes", pdf_styles["label"]))
+                    story.append(Paragraph("Selfish: yes", pdf_styles["label"]))
                     if entry.selfish_details:
                         story.append(Paragraph(entry.selfish_details, pdf_styles["body"]))
                 if entry.was_dishonest:
-                    story.append(Paragraph("Dishonest: Yes", pdf_styles["label"]))
+                    story.append(Paragraph("Dishonest: yes", pdf_styles["label"]))
                     if entry.dishonest_details:
                         story.append(Paragraph(entry.dishonest_details, pdf_styles["body"]))
 
@@ -241,7 +328,7 @@ class JournalExportView(View):
                 if practices:
                     story.append(Paragraph(f"Practices: {', '.join(practices)}", pdf_styles["body"]))
                 if entry.spiritual_notes:
-                    story.append(Paragraph("Spiritual Notes:", pdf_styles["label"]))
+                    story.append(Paragraph("Spiritual notes:", pdf_styles["label"]))
                     story.append(Paragraph(entry.spiritual_notes, pdf_styles["body"]))
                 if entry.additional_notes:
                     story.append(Paragraph("Notes:", pdf_styles["label"]))
@@ -249,7 +336,12 @@ class JournalExportView(View):
 
                 story.append(Spacer(1, 0.2 * inch))
 
-        doc.build(story)
+        label = f"PS01 · JOURNAL · {username.upper()}"
+        doc.build(
+            story,
+            onFirstPage=lambda c, d: _draw_journal_chrome(c, d, label),
+            onLaterPages=lambda c, d: _draw_journal_chrome(c, d, label),
+        )
         buf.seek(0)
         response = HttpResponse(buf.getvalue(), content_type="application/pdf")
         response["Content-Disposition"] = 'attachment; filename="journal_export.pdf"'

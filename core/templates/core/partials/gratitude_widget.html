@@ -1,22 +1,15 @@
-<!-- Gratitude Widget -->
-<div class="bg-ps-card border border-ps-border rounded-xl p-6">
-    <div class="flex items-center gap-3 mb-4">
-        <div class="p-2 bg-pink-500/20 rounded-lg">
-            <i data-lucide="sparkles" class="w-5 h-5 text-pink-400"></i>
-        </div>
-        <h3 class="text-lg font-semibold text-white">Gratitude</h3>
-    </div>
-
+<div class="card-head">
+    <h3>Gratitude today</h3>
     {% if gratitude_count > 0 %}
-        <p class="text-3xl font-bold text-white mb-1">{{ gratitude_count }}</p>
-        <p class="text-sm text-ps-muted mb-3">entr{{ gratitude_count|pluralize:"y,ies" }} today</p>
-    {% else %}
-        <p class="text-ps-muted text-sm mb-3">No entries yet today. What are you grateful for?</p>
+        <span class="meta mono"><span class="num">{{ gratitude_count }}</span> ENTR{{ gratitude_count|pluralize:"Y,IES" }}</span>
     {% endif %}
-
-    <a href="{% url 'gratitude' %}"
-       class="inline-flex items-center gap-2 px-4 py-2 bg-ps-accent hover:bg-ps-accent-hover text-white text-sm font-medium rounded-lg transition-colors">
-        <i data-lucide="{% if gratitude_count > 0 %}edit{% else %}plus{% endif %}" class="w-4 h-4"></i>
-        {% if gratitude_count > 0 %}View Gratitude{% else %}Add Gratitude{% endif %}
-    </a>
+</div>
+<div class="card-body">
+    {% if gratitude_count > 0 %}
+        <p><span class="num" style="font-size: var(--t-2xl); font-weight: 600;">{{ gratitude_count }}</span> <span class="mono">today</span></p>
+        <a href="{% url 'gratitude' %}" class="btn btn-ghost btn-sm">View gratitude</a>
+    {% else %}
+        <p class="mono" style="color: var(--ink-3);">No entries yet today · what are you grateful for?</p>
+        <a href="{% url 'gratitude' %}" class="btn btn-primary btn-sm">Add gratitude</a>
+    {% endif %}
 </div>

@@ -1,99 +1,80 @@
-<!DOCTYPE html>
-<html lang="en" class="h-full">
+{% load static %}<!doctype html>
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Powerful Silence{% endblock %}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>{% block title %}program.icos.dev{% endblock %}</title>
+    <link rel="manifest" href="/manifest.webmanifest">
+    <meta name="theme-color" content="#2C5F3F">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="PS01">
+    <link rel="apple-touch-icon" href="{% static 'icons/icon-192.png' %}">
+    <meta name="app-id" content="ps01">
+    <meta name="apps-json-url" content="https://icos.dev/apps.json">
     <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        ps: {
-                            bg: '#0f172a',
-                            card: '#1e293b',
-                            accent: '#6366f1',
-                            'accent-hover': '#818cf8',
-                            muted: '#94a3b8',
-                            border: '#334155',
-                        }
-                    }
+    (function () {
+        try {
+            var root = document.documentElement;
+            var raw = localStorage.getItem("ritual_state");
+            var s = raw ? JSON.parse(raw) : {};
+            if (!s || typeof s !== "object") s = {};
+            root.setAttribute("data-app-mode", s.appMode || "photo");
+            root.setAttribute("data-density", s.density || "comfortable");
+            root.setAttribute("data-view-mode", s.viewMode || "bright");
+            if (sessionStorage.getItem("ritual:transitioning") === "1") {
+                sessionStorage.removeItem("ritual:transitioning");
+                if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {
+                    root.classList.add("mode-entering");
                 }
             }
-        }
+        } catch (e) {}
+    })();
     </script>
-    <script src="https://unpkg.com/htmx.org@2.0.0"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <style>
-        @media print {
-            body { background: white !important; color: black !important; }
-            .bg-ps-card { background: white !important; border-color: #ccc !important; }
-            .text-white, .text-gray-200, .text-gray-300 { color: black !important; }
-            .text-ps-muted { color: #555 !important; }
-            /* Hide sidebar, topbar, messages, and non-print UI */
-            nav, .lg\\:ml-64 > :first-child, [x-show], .no-print,
-            button[type="submit"], .sticky { display: none !important; }
-            .lg\\:ml-64 { margin-left: 0 !important; }
-            main { padding: 0 !important; }
-            a { color: black !important; text-decoration: none !important; }
-        }
-        /* HTMX loading indicator */
-        .htmx-indicator { opacity: 0; transition: opacity 200ms ease-in; }
-        .htmx-request .htmx-indicator, .htmx-request.htmx-indicator { opacity: 1; }
-    </style>
-    {% block extra_head %}{% endblock %}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/tokens.css' %}">
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+    {% block head_extra %}{% endblock %}
 </head>
-<body class="h-full bg-ps-bg text-gray-200"
-      hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
-      x-data="{ sidebarOpen: false }">
+<body class="{% block body_class %}{% endblock %}">
+    <div class="bg"><div class="grain"></div><div class="view-dim" aria-hidden="true"></div></div>
+    <div class="frame"></div>
 
-    <!-- Skip to main content (accessibility) -->
-    <a href="#main-content"
-       class="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-2 focus:left-2 focus:px-4 focus:py-2 focus:bg-ps-accent focus:text-white focus:rounded-lg">
-        Skip to main content
-    </a>
+    <div class="app">
+        {% include 'partials/frame_corners.html' %}
+        {% include 'partials/frame_rails.html' %}
+        <main class="workspace">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
 
-    <div class="flex h-full">
-        <!-- Sidebar -->
-        {% include "components/sidebar.html" %}
+    {% include 'partials/nav_drawer.html' %}
+    {% include 'partials/app_drawer.html' %}
 
-        <!-- Main content area -->
-        <div class="flex-1 flex flex-col min-h-screen lg:ml-64">
-            <!-- Topbar -->
-            {% include "components/topbar.html" %}
+    <div class="drawer-scrim" id="drawer-scrim"></div>
 
-            <!-- Messages -->
-            {% include "components/messages.html" %}
-
-            <!-- Page content -->
-            <main class="flex-1 p-4 sm:p-6" id="main-content">
-                {% block content %}{% endblock %}
-            </main>
+    <dialog id="stub-modal" class="stub-modal" aria-labelledby="stub-modal-title">
+        <div class="stub-modal-inner">
+            <h3 class="stub-title" id="stub-modal-title">Coming soon</h3>
+            <p class="stub-desc">This feature is in flight.</p>
+            <button type="button" class="stub-close" autofocus>Close</button>
         </div>
-    </div>
+    </dialog>
 
-    <!-- Mobile sidebar overlay -->
-    <div x-show="sidebarOpen"
-         x-transition:enter="transition-opacity ease-linear duration-300"
-         x-transition:enter-start="opacity-0"
-         x-transition:enter-end="opacity-100"
-         x-transition:leave="transition-opacity ease-linear duration-300"
-         x-transition:leave-start="opacity-100"
-         x-transition:leave-end="opacity-0"
-         class="fixed inset-0 bg-black/50 z-30 lg:hidden"
-         @click="sidebarOpen = false"
-         style="display: none;">
-    </div>
-
+    <script src="{% static 'js/htmx.min.js' %}" defer></script>
     <script>
-        // Initialize Lucide icons after page load
-        document.addEventListener('DOMContentLoaded', () => lucide.createIcons());
-        // Re-initialize after HTMX swaps
-        document.addEventListener('htmx:afterSwap', () => lucide.createIcons());
+    document.body.addEventListener("htmx:configRequest", function (evt) {
+        evt.detail.headers["X-CSRFToken"] = "{{ csrf_token }}";
+    });
     </script>
+    <script src="{% static 'js/preferences.js' %}" defer></script>
+    <script src="{% static 'js/frame.js' %}" defer></script>
+    <script src="{% static 'js/drawer.js' %}" defer></script>
+    <script src="{% static 'js/dashboard-clock.js' %}" defer></script>
+    <script src="{% static 'js/pull-to-refresh.js' %}" defer></script>
+    <script src="{% static 'js/sw-register.js' %}" defer></script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

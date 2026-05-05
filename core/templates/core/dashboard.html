@@ -1,35 +1,34 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard — Powerful Silence{% endblock %}
-
-{% block page_title %}Dashboard{% endblock %}
+{% block title %}Dashboard — PS01{% endblock %}
 
 {% block content %}
-<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+{% include 'partials/page_hero.html' with eyebrow='OVERVIEW' title='Dashboard' only %}
 
-    {% include "core/partials/sobriety_widget.html" %}
-
-    {% include "core/partials/step_progress_widget.html" %}
-
-    {% include "core/partials/checkin_widget.html" %}
-
-    {% include "core/partials/recent_activity_widget.html" %}
-
-    {% include "core/partials/gratitude_widget.html" %}
-
-    <!-- Encouragement -->
-    <div class="bg-ps-card border border-ps-border rounded-xl p-6">
-        <div class="flex items-center gap-3 mb-4">
-            <div class="p-2 bg-violet-500/20 rounded-lg">
-                <i data-lucide="quote" class="w-5 h-5 text-violet-400"></i>
-            </div>
-            <h3 class="text-lg font-semibold text-white">Remember</h3>
-        </div>
-        <p class="text-gray-300 text-sm italic">
-            "We will intuitively know how to handle situations which used to baffle us."
-        </p>
-        <p class="text-xs text-ps-muted mt-2">— Alcoholics Anonymous, p. 84</p>
+<div class="two-col">
+    <div class="bone-card">
+        {% include "core/partials/sobriety_widget.html" %}
     </div>
-
+    <div class="bone-card">
+        {% include "core/partials/step_progress_widget.html" %}
+    </div>
+    <div class="bone-card">
+        {% include "core/partials/checkin_widget.html" %}
+    </div>
+    <div class="bone-card">
+        {% include "core/partials/recent_activity_widget.html" %}
+    </div>
+    <div class="bone-card">
+        {% include "core/partials/gratitude_widget.html" %}
+    </div>
+    <div class="bone-card">
+        <div class="card-head">
+            <h3>Remember</h3>
+            <span class="meta mono">AA · p. 84</span>
+        </div>
+        <div class="card-body">
+            <p style="font-style: italic;">"We will intuitively know how to handle situations which used to baffle us."</p>
+        </div>
+    </div>
 </div>
 {% endblock %}

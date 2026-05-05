@@ -1,5 +1,5 @@
-{% if saved %}
-<span class="text-emerald-400 transition-opacity duration-300">
-    Saved &#10003;
+{% with state=state|default:"saved" %}
+<span class="save-indicator mono" data-state="{{ state }}" aria-live="polite" style="font-size: var(--t-xs); text-transform: uppercase; letter-spacing: 0.08em; {% if state == 'saved' %}color: var(--ok);{% elif state == 'saving' %}color: var(--accent);{% elif state == 'error' %}color: var(--bad);{% else %}color: var(--ink-3);{% endif %}">
+    {% if state == 'saved' %}Saved ✓{% elif state == 'saving' %}Saving…{% elif state == 'error' %}Error{% else %}Idle{% endif %}
 </span>
-{% endif %}
+{% endwith %}

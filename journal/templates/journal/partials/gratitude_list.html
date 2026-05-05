@@ -1,24 +1,17 @@
-<!-- Gratitude entries list + add form (HTMX swappable) -->
 {% if entries %}
-<ul class="space-y-2 mb-4">
+<ul style="list-style: none; margin: 0 0 var(--pad-2); padding: 0;">
     {% for entry in entries %}
-    {% include "journal/partials/gratitude_entry.html" %}
+        {% include "journal/partials/gratitude_entry.html" %}
     {% endfor %}
 </ul>
 {% else %}
-<p class="text-ps-muted text-sm mb-4">No entries yet. Add your first gratitude below.</p>
+<p class="mono" style="color: var(--ink-3); margin: 0 0 var(--pad-2);">No entries yet · add your first gratitude below.</p>
 {% endif %}
 
-<!-- Inline add form -->
-<form hx-post="{% url 'gratitude_add' %}"
-      hx-target="#gratitude-list"
-      hx-swap="innerHTML"
-      class="flex gap-2">
+<form hx-post="{% url 'gratitude_add' %}" hx-target="#gratitude-list" hx-swap="innerHTML" style="display: flex; gap: 8px; align-items: flex-end;">
     {% csrf_token %}
-    {{ form.entry }}
-    <button type="submit"
-            class="px-4 py-2.5 bg-ps-accent hover:bg-ps-accent-hover text-white text-sm font-medium rounded-lg transition-colors whitespace-nowrap">
-        <i data-lucide="plus" class="w-4 h-4 inline"></i>
-        Add
-    </button>
+    <div class="field" style="flex: 1; margin: 0;">
+        {{ form.entry }}
+    </div>
+    <button type="submit" class="btn btn-primary btn-sm" style="white-space: nowrap;">Add</button>
 </form>

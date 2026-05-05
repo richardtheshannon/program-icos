@@ -1,60 +1,43 @@
 {% extends "base.html" %}
 
-{% block title %}{{ action }} Person — Powerful Silence{% endblock %}
-
-{% block page_title %}{{ action }} Person{% endblock %}
+{% block title %}{{ action }} person · Amends — PS01{% endblock %}
 
 {% block content %}
-<div class="max-w-2xl mx-auto">
+{% if person %}
+    {% include 'partials/page_hero.html' with eyebrow='AMENDS · EDIT' title=person.name subtitle='Update person record' only %}
+{% else %}
+    {% include 'partials/page_hero.html' with eyebrow='AMENDS · NEW' title='New person' subtitle='Step 8 entry' only %}
+{% endif %}
 
-    <div class="mb-6">
-        <a href="{% url 'person_list' %}" class="text-sm text-ps-muted hover:text-white transition-colors">
-            <i data-lucide="arrow-left" class="w-4 h-4 inline"></i>
-            Back to Amends List
-        </a>
+<div class="bone-card" style="margin-bottom: var(--pad-3);">
+    <div class="card-head">
+        <h3>{{ action }} person</h3>
+        <a href="{% url 'person_list' %}" class="btn btn-ghost btn-sm">← Back to list</a>
     </div>
-
-    <div class="bg-ps-card border border-ps-border rounded-xl p-6">
-        <h2 class="text-lg font-semibold text-white mb-5">{{ action }} Person</h2>
-
-        <form method="post" class="space-y-5">
+    <div class="card-body">
+        <form method="post">
             {% csrf_token %}
-
-            <div>
-                <label class="block text-sm font-medium text-gray-300 mb-2">Name</label>
+            <div class="field">
+                <label for="id_name" class="field-label">Name</label>
                 {{ form.name }}
-                {% if form.name.errors %}
-                <p class="text-red-400 text-xs mt-1">{{ form.name.errors.0 }}</p>
-                {% endif %}
+                {% if form.name.errors %}<p class="field-error">{{ form.name.errors.0 }}</p>{% endif %}
             </div>
-
-            <div>
-                <label class="block text-sm font-medium text-gray-300 mb-2">Relationship</label>
+            <div class="field">
+                <label for="id_relationship" class="field-label">Relationship</label>
                 {{ form.relationship }}
             </div>
-
-            <div>
-                <label class="block text-sm font-medium text-gray-300 mb-2">How did you harm this person?</label>
+            <div class="field">
+                <label for="id_how_harmed" class="field-label">How did you harm this person?</label>
                 {{ form.how_harmed }}
-                {% if form.how_harmed.errors %}
-                <p class="text-red-400 text-xs mt-1">{{ form.how_harmed.errors.0 }}</p>
-                {% endif %}
+                {% if form.how_harmed.errors %}<p class="field-error">{{ form.how_harmed.errors.0 }}</p>{% endif %}
             </div>
-
-            <div>
-                <label class="block text-sm font-medium text-gray-300 mb-2">Willingness Level</label>
+            <div class="field">
+                <label for="id_willingness_level" class="field-label">Willingness level</label>
                 {{ form.willingness_level }}
             </div>
-
-            <div class="flex items-center justify-end gap-3 pt-2">
-                <a href="{% url 'person_list' %}"
-                   class="px-4 py-2 bg-ps-bg border border-ps-border text-ps-muted text-sm rounded-lg hover:text-white transition-colors">
-                    Cancel
-                </a>
-                <button type="submit"
-                        class="px-6 py-2.5 bg-ps-accent hover:bg-ps-accent-hover text-white font-medium rounded-lg transition-colors">
-                    {{ action }} Person
-                </button>
+            <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: var(--pad-3); padding-top: var(--pad-3); border-top: 1px solid var(--line-soft);">
+                <a href="{% url 'person_list' %}" class="btn btn-ghost">Cancel</a>
+                <button type="submit" class="btn btn-primary">{{ action }} person</button>
             </div>
         </form>
     </div>

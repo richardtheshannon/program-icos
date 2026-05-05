@@ -1,0 +1,46 @@
+{% load static %}
+<div class="corner tl">
+    <a class="logo" href="/dashboard/" aria-label="PS01 home">
+        <span class="mark" aria-hidden="true"></span>
+        <span class="name">PS01</span>
+    </a>
+</div>
+
+<div class="corner tr">
+    <button class="app-drawer-btn" id="app-drawer-btn" type="button"
+            aria-label="Open app drawer" aria-expanded="false" aria-controls="app-drawer">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="6"  cy="6"  r="1.4"/>
+            <circle cx="12" cy="6"  r="1.4"/>
+            <circle cx="18" cy="6"  r="1.4"/>
+            <circle cx="6"  cy="12" r="1.4"/>
+            <circle cx="12" cy="12" r="1.4"/>
+            <circle cx="18" cy="12" r="1.4"/>
+            <circle cx="6"  cy="18" r="1.4"/>
+            <circle cx="12" cy="18" r="1.4"/>
+            <circle cx="18" cy="18" r="1.4"/>
+        </svg>
+    </button>
+</div>
+
+<div class="corner bl">
+    {% if user.is_authenticated %}
+        {% with username=user.username %}
+        <div class="avatar" title="{{ username }}" aria-label="Signed in as {{ username }}">
+            <span class="avatar-initial" aria-hidden="true">{{ username|slice:":1"|upper }}</span>
+            <span class="dot" aria-hidden="true"></span>
+        </div>
+        {% endwith %}
+    {% else %}
+        <div class="avatar avatar-anon" aria-label="Not signed in"></div>
+    {% endif %}
+</div>
+
+<div class="corner br">
+    <button class="menu-btn" id="menu-btn" type="button"
+            aria-label="Open navigation menu" aria-expanded="false" aria-controls="nav-drawer">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 7h16M4 12h16M4 17h16"/>
+        </svg>
+    </button>
+</div>

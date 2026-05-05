@@ -1,41 +1,38 @@
 {% extends "base.html" %}
 
-{% block title %}Amends List — Powerful Silence{% endblock %}
-
-{% block page_title %}Amends List{% endblock %}
+{% block title %}Amends · People — PS01{% endblock %}
 
 {% block content %}
-<div class="max-w-3xl mx-auto">
+{% include 'partials/page_hero.html' with eyebrow='AMENDS · STEPS 8 & 9' title='People' meta=meta_html only %}
 
-    <div class="flex items-center justify-between mb-6">
-        <div>
-            <h2 class="text-xl font-bold text-white">Steps 8 & 9 — Amends</h2>
-            <p class="text-sm text-ps-muted">People you have harmed and are willing to make amends to.</p>
-        </div>
-        <a href="{% url 'person_create' %}"
-           class="inline-flex items-center gap-2 px-4 py-2 bg-ps-accent hover:bg-ps-accent-hover text-white text-sm font-medium rounded-lg transition-colors">
-            <i data-lucide="plus" class="w-4 h-4"></i>
-            Add Person
-        </a>
+<div class="bone-card" style="margin-bottom: var(--pad-3);">
+    <div class="card-head">
+        <h3>Amends list</h3>
+        <a href="{% url 'person_create' %}" class="btn btn-primary btn-sm">+ Add person</a>
     </div>
-
-    {% if people %}
-    <div class="space-y-3">
-        {% for person in people %}
-        {% include "amends/partials/person_row.html" %}
-        {% endfor %}
+    <div class="card-body">
+        {% if people %}
+            <div style="overflow-x: auto;">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Status</th>
+                            <th class="row-actions-head">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for person in people %}
+                            {% include "amends/partials/person_row.html" %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="mono" style="color: var(--ink-3);">Your amends list is empty.</p>
+            <p style="font-size: var(--t-sm); color: var(--ink-3);"><em>Step 8 — Made a list of all persons we had harmed, and became willing to make amends to them all.</em></p>
+            <a href="{% url 'person_create' %}" class="btn btn-primary btn-sm">+ Add your first person</a>
+        {% endif %}
     </div>
-    {% else %}
-    <div class="bg-ps-card border border-ps-border rounded-xl p-8 text-center">
-        <i data-lucide="handshake" class="w-12 h-12 text-ps-muted mx-auto mb-3"></i>
-        <p class="text-gray-300 mb-2">Your amends list is empty.</p>
-        <p class="text-sm text-ps-muted mb-4">Step 8: Make a list of all persons you have harmed, and become willing to make amends to them all.</p>
-        <a href="{% url 'person_create' %}"
-           class="inline-flex items-center gap-2 px-4 py-2 bg-ps-accent hover:bg-ps-accent-hover text-white text-sm font-medium rounded-lg transition-colors">
-            <i data-lucide="plus" class="w-4 h-4"></i>
-            Add Your First Person
-        </a>
-    </div>
-    {% endif %}
 </div>
 {% endblock %}

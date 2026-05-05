@@ -18,6 +18,13 @@ class PersonListView(ListView):
     def get_queryset(self):
         return Person.objects.filter(user=self.request.user)
 
+    def get_context_data(self, **kwargs: object) -> dict:
+        context = super().get_context_data(**kwargs)
+        total = Person.objects.filter(user=self.request.user).count()
+        context["total_count"] = total
+        context["meta_html"] = f'<span class="num">{total}</span> {"person" if total == 1 else "people"}'
+        return context
+
 
 class PersonCreateView(View):
     """Add a new person to the amends list."""

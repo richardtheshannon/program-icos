@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}Streak — PS01{% endblock %}
+
+{% block content %}
+{% include 'partials/page_hero.html' with eyebrow='JOURNAL · STREAK' title='Daily check-in streak' only %}
+
+<div class="bone-card" style="margin-bottom: var(--pad-3);">
+    <div class="card-head">
+        <h3>Current streak</h3>
+    </div>
+    <div class="card-body" style="text-align: center; padding: var(--pad-3) 0;">
+        {% if streak > 0 %}
+            <div class="display-serif" style="font-size: clamp(60px, 14vw, 120px); line-height: 1; color: var(--accent); margin-bottom: 8px;">{{ streak }}</div>
+            <p class="mono" style="text-transform: uppercase; letter-spacing: 0.12em; color: var(--ink-3); margin: 0;">DAY{{ streak|pluralize }} IN A ROW</p>
+        {% else %}
+            <div class="display-serif" style="font-size: clamp(48px, 10vw, 80px); line-height: 1; color: var(--ink-3); margin-bottom: 8px;">—</div>
+            <p class="mono" style="color: var(--ink-3); margin: 0;">No active streak. Start one today.</p>
+        {% endif %}
+    </div>
+    <div class="card-body" style="text-align: center; padding-top: var(--pad-2); border-top: 1px solid var(--line-soft);">
+        <a href="{% url 'daily_checkin' %}" class="btn btn-primary btn-sm">{% if streak > 0 %}Continue today{% else %}Start today's check-in{% endif %}</a>
+        <a href="{% url 'journal_history' %}" class="btn btn-ghost btn-sm" style="margin-left: 8px;">View history</a>
+    </div>
+</div>
+{% endblock %}

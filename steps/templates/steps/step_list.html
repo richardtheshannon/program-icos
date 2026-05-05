@@ -1,23 +1,24 @@
 {% extends "base.html" %}
 {% load step_tags %}
 
-{% block title %}My Step Work — Powerful Silence{% endblock %}
-
-{% block page_title %}My Step Work{% endblock %}
+{% block title %}Steps — PS01{% endblock %}
 
 {% block content %}
-<div class="flex items-center justify-between mb-6">
-    <p class="text-ps-muted text-sm">
-        Work through each step at your own pace. Your progress is saved automatically.
-    </p>
-    <a href="{% url 'export_all_steps' %}"
-       class="no-print inline-flex items-center gap-2 px-4 py-2 bg-gray-700/50 hover:bg-gray-700 text-sm text-ps-muted hover:text-white rounded-lg transition-colors">
-        <i data-lucide="download" class="w-4 h-4"></i>
-        Export All (PDF)
-    </a>
+{% include 'partials/page_hero.html' with eyebrow='12 STEPS · WORKING THROUGH' title='Steps' meta=meta_html only %}
+
+<div class="bone-card" style="margin-bottom: var(--pad-3);">
+    <div class="card-head">
+        <h3>Overview</h3>
+        <a href="{% url 'export_all_steps' %}" class="btn btn-ghost btn-sm">Export all (PDF)</a>
+    </div>
+    <div class="card-body">
+        <p class="mono" style="color: var(--ink-3); font-size: var(--t-sm);">
+            Work through each step at your own pace. Progress is auto-saved.
+        </p>
+    </div>
 </div>
 
-<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+<div class="admin-grid">
     {% for step in steps %}
         {% with info=progress_map|get_item:step.pk %}
         {% include "steps/partials/step_card.html" with step=step info=info %}

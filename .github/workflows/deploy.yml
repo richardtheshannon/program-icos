@@ -51,6 +51,7 @@ jobs:
             00_research/**
             _TEMP/**
             pip-cache/**
+            bin/**
             Dockerfile
             docker-compose.yml
             pytest.ini
