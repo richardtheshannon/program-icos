@@ -1,3 +1,11 @@
+# POST-DEPLOY MANUAL STEP (cPanel Terminal):
+# This workflow only ships files via FTP — it does NOT run Django commands on prod.
+# After any deploy that touches steps/migrations/ OR steps/management/commands/seed_steps.py,
+# open cPanel → Advanced → Terminal, cd to the app dir, and run:
+#     python manage.py migrate --noinput
+#     python manage.py seed_steps
+# seed_steps is idempotent (update_or_create), so re-running is safe.
+
 name: Deploy to Production
 
 on:

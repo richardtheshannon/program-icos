@@ -4,10 +4,10 @@
 
 ## INIT [​](#init)
 
-`Read _TEMP/CLAUDE.md for project context. Development principles: Make minimal, surgical edits—use existing systems and avoid new dependencies unless absolutely necessary. Warn me before any changes that could break functionality or layouts. Don't create user guides unless I ask. If our conversation becomes very long or you notice degraded recall of earlier context, let me know so we can start a fresh session. Our dev server is already running.`
+` Read _TEMP/CLAUDE.md for project context. Development principles: Make minimal, surgical edits—use existing systems and avoid new dependencies unless absolutely necessary. Warn me before any changes that could break functionality or layouts. Don't create user guides unless I ask. If our conversation becomes very long or you notice degraded recall of earlier context, let me know so we can start a fresh session. Our dev server is already running. `
 
 ```
-<X Read 00_research\12steppers-analysis.md and 00_research\PS01-Implementation-Guide.md we will be developing this as an application in this root directory. For the application development we will be using _TEMP\AUTO-CREATE.md Lets walk though this one phase at a time and make appropriate updates so our development comes together correctly and without issues. Ask me any questions you may have so we can develop this correctly and efficiently. Strictly ask me one question at a time so we can update the documents for development. 
+<X I do want to have AI insights, suggestions, review, and summary. I would like to add this to the application, so that on the dashboard as soon as the user logs in, there is a pertinent paragraph regarding the overall status. Then, I want to sprinkle it throughout the application somehow. Ask me any questions you may have so we can develop this correctly and efficiently. Strictly ask me one question at a time so we can create this efficiently and effectively. 
 
 <X
 ```
@@ -16,21 +16,23 @@ Password: devpassword123
 
 > Ask me any questions you may have so we can develop this correctly and efficiently. Strictly ask me one question at a time so we can create this as a markdown file. Break it up into bite sized development phases. Create it in the \_TEMP directory as \_\_\_.md
 
+> We will be deploying the changes we have made. Review the files for deployment. Let me know if: - we have database migrations - if we need to restart any services on the server. I will be pushing to github for cpanel deployment. 
+
 CURRENT DIRECTORY: cd /home/highlineadventur/public\_html/`[PATH]`
 
 ` Update _TEMP/CLAUDE.md for project status and context regarding our developments. Revise the markdown file to include only essential development specifications, information, and development guidelines. Keep the file under 1000 lines. `
 
 ## LOCAL DEV [​](#local-dev)
 
-Terminal 1 - Backend: `venv\Scripts\activate && venv\Scripts\uvicorn main:app --reload --host 127.0.0.1 --port 8001`
-
-Terminal 2 - Frontend: `cd c:\Users\icos\00_DEPLOY\[PATH] && python -m http.server 3020`
+py manage.py runserver
+Email: richardtheshannon@gmail.com
+Password: Superculture1@
 
 ## GIT [​](#git)
 
 git pull
 
-git add . && git commit -m "general commit" && git push
+git add . && git commit -m "PS12-V001.1" && git push
 
 ## PRODUCTION DEPLOYMENT [​](#production-deployment)
 

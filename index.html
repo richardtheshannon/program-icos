@@ -225,6 +225,61 @@
       margin-right: 0.35rem;
     }
 
+    /* App card */
+    .app-section {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 0 1.5rem 3rem;
+      text-align: center;
+    }
+
+    .app-section h2 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 1.75rem;
+    }
+
+    .app-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 2rem;
+      text-decoration: none;
+      display: block;
+      transition: border-color 0.2s, background 0.2s, transform 0.2s;
+    }
+
+    .app-card:hover {
+      border-color: var(--warm);
+      background: var(--surface-hover);
+      transform: translateY(-2px);
+    }
+
+    .app-card .app-icon {
+      font-size: 1.75rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .app-card h3 {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--warm);
+      margin-bottom: 0.5rem;
+    }
+
+    .app-card p {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-bottom: 1rem;
+    }
+
+    .app-card .app-link {
+      font-size: 0.85rem;
+      color: var(--warm);
+      font-weight: 500;
+    }
+
     /* Footer */
     footer {
       text-align: center;
@@ -339,11 +394,23 @@
     </div>
   </section>
 
+  <div class="divider"></div>
+
+  <section class="app-section">
+    <h2>Also from Powerful Silence</h2>
+    <a href="https://sage.powerfulsilence.com" class="app-card">
+      <div class="app-icon">&#127807;</div>
+      <h3>Sage Priori</h3>
+      <p>An emotional, mental, physical, and spiritual wellness application — tools for whole-person recovery and growth.</p>
+      <span class="app-link">sage.powerfulsilence.com &rarr;</span>
+    </a>
+  </section>
+
   <footer>
     <div class="footer-cta">
       <a href="https://12steps.powerfulsilence.com" class="cta-btn">Start Your Step Work</a>
     </div>
-    <p>&copy; 2026 Powerful Silence &middot; <a href="https://12steps.powerfulsilence.com">12steps.powerfulsilence.com</a></p>
+    <p>&copy; 2026 Powerful Silence &middot; <a href="https://12steps.powerfulsilence.com">12steps.powerfulsilence.com</a> &middot; <a href="https://sage.powerfulsilence.com">sage.powerfulsilence.com</a></p>
   </footer>
 
 </body>
