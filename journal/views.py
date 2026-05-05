@@ -255,23 +255,31 @@ class JournalExportView(View):
     """Export daily inventory entries for a date range as PDF."""
 
     def get(self, request: HttpRequest) -> HttpResponse:
-        # Parse date range from query params (default: last 30 days)
-        today = timezone.now().date()
+        # Parse optional date range from query params. With no params, export ALL entries
+        # (matches JournalHistoryView's all-time default). Either bound may be omitted
+        # independently for an open-ended range.
         start_str = request.GET.get("start", "")
         end_str = request.GET.get("end", "")
 
-        try:
-            start_date = datetime.date.fromisoformat(start_str) if start_str else today - datetime.timedelta(days=30)
-        except ValueError:
-            start_date = today - datetime.timedelta(days=30)
-        try:
-            end_date = datetime.date.fromisoformat(end_str) if end_str else today
-        except ValueError:
-            end_date = today
+        start_date: datetime.date | None = None
+        end_date: datetime.date | None = None
+        if start_str:
+            try:
+                start_date = datetime.date.fromisoformat(start_str)
+            except ValueError:
+                start_date = None
+        if end_str:
+            try:
+                end_date = datetime.date.fromisoformat(end_str)
+            except ValueError:
+                end_date = None
 
-        entries = DailyInventory.objects.filter(
-            user=request.user, date__gte=start_date, date__lte=end_date
-        ).order_by("-date")
+        qs = DailyInventory.objects.filter(user=request.user)
+        if start_date:
+            qs = qs.filter(date__gte=start_date)
+        if end_date:
+            qs = qs.filter(date__lte=end_date)
+        entries = list(qs.order_by("-date"))
 
         pdf_styles = _build_journal_pdf_styles()
 
@@ -289,10 +297,20 @@ class JournalExportView(View):
             pdf_styles["eyebrow"],
         ))
         story.append(Paragraph("Daily inventory journal", pdf_styles["title"]))
-        story.append(Paragraph(
-            f"{start_date.strftime('%B %d, %Y')} – {end_date.strftime('%B %d, %Y')}",
-            pdf_styles["subtitle"],
-        ))
+
+        # Subtitle: explicit range when supplied; otherwise the actual span of returned
+        # entries; otherwise "All entries" (no params + no entries on file).
+        if start_date or end_date:
+            start_label = start_date.strftime("%B %d, %Y") if start_date else "Earliest"
+            end_label = end_date.strftime("%B %d, %Y") if end_date else "Latest"
+            subtitle = f"{start_label} – {end_label}"
+        elif entries:
+            actual_start = min(e.date for e in entries)
+            actual_end = max(e.date for e in entries)
+            subtitle = f"{actual_start.strftime('%B %d, %Y')} – {actual_end.strftime('%B %d, %Y')}"
+        else:
+            subtitle = "All entries"
+        story.append(Paragraph(subtitle, pdf_styles["subtitle"]))
         story.append(Spacer(1, 0.2 * inch))
 
         if not entries:
