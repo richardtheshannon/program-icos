@@ -120,6 +120,23 @@
  * data-app-mode lives on <html>, set by the inline head script before paint
  * and by preferences.js's setAppMode() at runtime.
  */
+/* Photo mode: ink tokens mirror dark mode so widget text reads cream on the
+ * photo + scrim. Root ink-* values are tuned for clean Light (dark-on-cream)
+ * and render dark-on-dark over the photo. Inline template styles
+ * (sobriety_widget, recent_activity_widget, gratitude_widget) and CSS rules
+ * like .num / .card-body that use color: var(--ink-*) all inherit through
+ * this block, so we don't have to override them individually.
+ * Bg tokens stay at root values — photo mode's body bg is hardcoded #000 in
+ * app.css (the void around the photo edge); --bg-elev / --bg-sunken aren't
+ * referenced in photo mode chrome. */
+[data-app-mode="photo"] {
+    --ink:          #f5f2ea;
+    --ink-2:        #ebe6d9;
+    --ink-3:        #a6a89d;
+    --ink-4:        #82847a;
+    --ink-5:        #5e6058;
+}
+
 [data-app-mode="dark"] {
     --bg:           #0e0f0c;
     --bg-elev:      #1a1c18;
