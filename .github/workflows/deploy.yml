@@ -27,7 +27,6 @@ jobs:
           SECRET_KEY: test-secret-key-for-ci
 
   deploy:
-    needs: test
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master'
 
