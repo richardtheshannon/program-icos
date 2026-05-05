@@ -40,15 +40,11 @@ C:\Users\ic0s\Downloads\_obsd\RJS\RJS_icos-ritual\_icos-dev\program-icos-dev
 cd C:\Users\ic0s\Downloads\_obsd\RJS\RJS_icos-ritual\_icos-dev\program-icos-dev
 py manage.py runserver
 
-
-# LOCAL DEV: RITUAl
->Open a new PowerShell window and run:
-cd C:\Users\ic0s\Downloads\_obsd\RJS\RJS_icos-ritual\_icos-dev\
-C:\php\php.exe -S localhost:8081 -t ritual-icos-dev\public\
-
-_icos-dev\ritual-icos-dev
 # DEPLOY
-cd _icos-dev/ritual-icos-dev && git add -A && git commit -m "V003.0" && git push origin main
+git add -A && git commit -m "V001.0" && git push origin master
+cd ~/public_html/program.icos.dev
+touch tmp/restart.txt
+
 
 <x Review:
 _TEMP\00_Research\ActiveCampaign.md

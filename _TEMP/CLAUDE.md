@@ -11,7 +11,7 @@ A Django-based 12-step recovery web application (AA-focused, architected for mul
 
 ## Status (as of 2026-05)
 - Core feature set complete (dashboard, 12 steps with 136 questions, daily check-in, gratitude, amends).
-- **In-flight:** V003.0 visual reskin — 9-phase Frame Studio port (commit `8b32781`, phases A–I). Some test strings still reference pre-reskin copy; the test gate in `deploy.yml` was dropped so deploys ship regardless of these stale failures (commit `80253a6`). Tests to be updated in follow-up.
+- **In-flight:** V003.0 visual reskin — 9-phase Frame Studio port (commit `8b32781`, phases A–I). Some test strings still reference pre-reskin copy. The test gate was first dropped (commit `80253a6`), then the `test` job was removed entirely from `deploy.yml` to cut red-X noise on every push. Local `py -m pytest` still runs for dev. Re-add the CI test job once the reskin strings are updated.
 - **Recent fix (this session):** prod `program.icos.dev` was missing seeded `Step` rows — dashboard rendered "Begin step work" with empty progress. Resolved by running `python manage.py migrate && python manage.py seed_steps` in cPanel Terminal. See "Production Deployment → Post-deploy manual step" below.
 
 ## Tech Stack
@@ -55,7 +55,7 @@ py -m pytest steps/
 py -m pytest journal/
 py -m pytest amends/
 ```
-Tests use SQLite via `config/settings_test.py` (overrides PostgreSQL for speed). Note: ~16 tests currently fail on string mismatches from the V003 reskin (see Status).
+Tests use SQLite via `config/settings_test.py` (overrides PostgreSQL for speed). Note: ~16 tests currently fail locally on string mismatches from the V003 reskin (see Status). CI no longer runs them — the `test` job was removed from the deploy workflow until the reskin strings are updated.
 
 ## Key URLs
 | URL | View | Description |
@@ -95,7 +95,7 @@ Tests use SQLite via `config/settings_test.py` (overrides PostgreSQL for speed).
 | `config/settings_production.py` | Production settings (DEBUG=False, HSTS, secure cookies) |
 | `requirements.txt` | Python dependencies |
 | `passenger_wsgi.py` | Passenger WSGI entry point |
-| `.github/workflows/deploy.yml` | CI/CD workflow (test + FTP deploy to `program.icos.dev`) |
+| `.github/workflows/deploy.yml` | CI/CD workflow (FTP deploy to `program.icos.dev`; test job temporarily removed) |
 | `Dockerfile` | Dev container (Python 3.12, Node.js 22, Claude Code) |
 | `docker-compose.yml` | Dev container orchestration |
 
@@ -116,7 +116,7 @@ Tests use SQLite via `config/settings_test.py` (overrides PostgreSQL for speed).
 ### CI/CD Pipeline
 - **Workflow:** `.github/workflows/deploy.yml`
 - **Trigger:** Push to `master` branch
-- **Flow:** Run tests (pytest) → FTP deploy to cPanel. Test failures **do not** block deploy (gate dropped per commit `80253a6`).
+- **Flow:** FTP deploy to cPanel. The `test` job was removed (was previously gated then ungated; now removed entirely until V003 reskin test strings are fixed). Run `py -m pytest` locally before pushing.
 - **FTP Action:** SamKirkland/FTP-Deploy-Action@v4.3.5
 - **GitHub Secrets:** `FTP_SERVER`, `FTP_USERNAME`, `FTP_PASSWORD`
 - **Excludes:** `.git*`, `__pycache__/`, `.env`, `db.sqlite3`, `.ralph/`, `00_research/`, `_TEMP/`, `pip-cache/`, `bin/`, `Dockerfile`, `docker-compose.yml`, `pytest.ini`, `.gitignore`, `staticfiles/`, `index.html`
@@ -178,11 +178,11 @@ Different cPanel host. Separate FTP credentials and DB. Not on the GitHub Action
 - Write tests for all new views, models, and management commands
 - Use `pytest` with `config/settings_test.py` (SQLite, no PostgreSQL needed)
 - Mock external dependencies and `.env` variables in tests
-- CI runs tests but **does not block** deploy on failure (current state — see Status)
+- CI no longer runs tests — `test` job removed from `deploy.yml` until V003 reskin strings are updated (see Status). Run `py -m pytest` locally before pushing.
 
 ### Git Workflow
 - Single branch: `master`
-- Push to `master` triggers CI/CD (test → FTP deploy to `program.icos.dev`)
+- Push to `master` triggers CI/CD (FTP deploy to `program.icos.dev`; no CI test step currently — run `py -m pytest` locally first)
 - Write descriptive commit messages
 
 ### Protected Directories (do not modify without coordination)
